@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to publish (e.g. v0.1.2). Leave empty to build the artifact only."
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -39,9 +44,14 @@ jobs:
         run: chmod +x gradlew && ./gradlew :app:assembleRelease --stacktrace
 
       - name: Rename APK
+        env:
+          PUBLISH_TAG: ${{ inputs.tag }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          elif [ -n "$PUBLISH_TAG" ]; then
+            VERSION="${PUBLISH_TAG#v}"
+          else
             VERSION="$(git rev-parse --short HEAD)"
           fi
           APK_PATH="$(find app/build/outputs/apk/release -name '*.apk' | head -n 1)"
@@ -54,9 +64,11 @@ jobs:
           name: ${{ env.APK_NAME }}
           path: app/build/outputs/apk/release/${{ env.APK_NAME }}
 
-      - name: Upload to GitHub Releases
-        if: github.ref_type == 'tag'
+      - name: Publish to GitHub Releases
+        if: github.ref_type == 'tag' || inputs.tag != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}
           files: app/build/outputs/apk/release/${{ env.APK_NAME }}
           generate_release_notes: true
+          fail_on_unmatched_files: true
