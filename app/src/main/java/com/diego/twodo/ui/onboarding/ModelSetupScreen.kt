@@ -64,6 +64,7 @@ fun ModelSetupScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
                 status = status,
                 hasPartialDownload = viewModel.hasPartialDownload,
                 onDownload = viewModel::downloadModel,
+                onDownloadOverMobileData = viewModel::downloadModelOverMobileData,
                 onResume = viewModel::resumeDownload,
                 onPause = viewModel::pauseDownload,
                 onCancel = viewModel::cancelDownload,
@@ -81,6 +82,7 @@ private fun ModelStatusCard(
     status: ModelStatus,
     hasPartialDownload: Boolean,
     onDownload: () -> Unit,
+    onDownloadOverMobileData: () -> Unit,
     onResume: () -> Unit,
     onPause: () -> Unit,
     onCancel: () -> Unit,
@@ -115,9 +117,30 @@ private fun ModelStatusCard(
                         Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.setup_download))
                         }
+                        TextButton(onClick = onDownloadOverMobileData) {
+                            Text(stringResource(R.string.setup_download_mobile))
+                        }
                     }
                     TextButton(onClick = onSkip) {
                         Text(stringResource(R.string.setup_skip))
+                    }
+                }
+                ModelStatus.WaitingForNetwork -> {
+                    Text(
+                        text = stringResource(R.string.setup_waiting_network),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = onPause) {
+                            Text(stringResource(R.string.setup_pause))
+                        }
+                        TextButton(onClick = onCancel) {
+                            Text(stringResource(R.string.setup_cancel))
+                        }
+                    }
+                    TextButton(onClick = onDownloadOverMobileData) {
+                        Text(stringResource(R.string.setup_download_mobile))
                     }
                 }
                 is ModelStatus.Downloading -> {

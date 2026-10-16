@@ -12,6 +12,8 @@
     <string name="setup_skip">Skip for now</string>
     <string name="setup_ready">Model ready 🎉 Your tasks just got smarter.</string>
     <string name="setup_progress_format">Downloading… %1$d%%</string>
+    <string name="setup_waiting_network">Waiting for a network connection… the download will start automatically.</string>
+    <string name="setup_download_mobile">Use mobile data instead</string>
     <string name="setup_low_ram">This device is low on memory, so TwoDo will classify tasks with instant rules instead of the AI model.</string>
     <string name="setup_error_format">Download failed: %1$s</string>
     <string name="setup_retry">Try again</string>

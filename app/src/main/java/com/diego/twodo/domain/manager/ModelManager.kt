@@ -143,9 +143,12 @@ class ModelManager @Inject constructor(
     private fun observeWorkManager() {
         scope.launch {
             workManager.getWorkInfosByTagFlow(ModelDownloadWorker.WORK_TAG).collect { workInfos ->
-                val workInfo = workInfos.firstOrNull() ?: return@collect
+                val workInfo = workInfos.pickActiveWorkInfo() ?: return@collect
 
                 when (workInfo.state) {
+                    WorkInfo.State.ENQUEUED -> {
+                        _modelStatus.value = ModelStatus.WaitingForNetwork
+                    }
                     WorkInfo.State.RUNNING -> {
                         val progress = workInfo.progress.getInt(ModelDownloadWorker.KEY_PROGRESS, 0)
                         _modelStatus.value = ModelStatus.Downloading(progress)
@@ -173,12 +176,28 @@ class ModelManager @Inject constructor(
         }
     }
 
+    /**
+     * Picks the WorkInfo that best represents the current download run, preferring live
+     * states over terminal ones. With [ExistingWorkPolicy.REPLACE] the tag query can
+     * briefly contain stale terminal entries alongside the fresh work.
+     */
+    private fun List<WorkInfo>.pickActiveWorkInfo(): WorkInfo? {
+        val priority = mapOf(
+            WorkInfo.State.RUNNING to 0,
+            WorkInfo.State.ENQUEUED to 1,
+        )
+        return minByOrNull { priority[it.state] ?: 2 }
+    }
+
     companion object {
         private const val LOW_RAM_THRESHOLD_BYTES = 3L * 1024 * 1024 * 1024 // 3 GB
         private const val BACKOFF_DELAY_SECONDS = 30L
 
-        /** Default model for MediaPipe LLM Inference: Gemma 3 1B int4 (LiteRT Community). */
+        /**
+         * Default model: Qwen3 0.6B from the LiteRT Community collection.
+         * Ungated (anonymous download allowed) and supports Range requests for resume.
+         */
         const val DEFAULT_MODEL_URL =
-            "https://huggingface.co/litert-community/Gemma3-1B/resolve/main/gemma3-1b-it-int4.task"
+            "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm"
     }
 }

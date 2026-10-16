@@ -26,6 +26,8 @@ class OnboardingViewModel @Inject constructor(
 
     fun downloadModel() = modelManager.startDownload()
 
+    fun downloadModelOverMobileData() = modelManager.startDownload(requireWifi = false)
+
     fun pauseDownload() = modelManager.pauseDownload()
 
     fun resumeDownload() = modelManager.resumeDownload()
