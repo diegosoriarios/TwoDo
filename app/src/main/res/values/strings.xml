@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">TwoDo</string>
+
+    <string name="setup_title">Set up on-device AI</string>
+    <string name="setup_description">TwoDo sorts every task into ⚡ 2 min, ⏱️ 30 min or 🏗️ long. An AI model running entirely on your phone makes the sorting smarter — nothing ever leaves your device.</string>
+    <string name="setup_download_hint">One-time Wi-Fi download. Everything runs offline afterwards.</string>
+    <string name="setup_download">Download model (Wi-Fi)</string>
+    <string name="setup_resume">Resume download</string>
+    <string name="setup_partial">A partial download was found. Pick up where you left off?</string>
+    <string name="setup_pause">Pause</string>
+    <string name="setup_cancel">Cancel</string>
+    <string name="setup_skip">Skip for now</string>
+    <string name="setup_ready">Model ready 🎉 Your tasks just got smarter.</string>
+    <string name="setup_progress_format">Downloading… %1$d%%</string>
+    <string name="setup_low_ram">This device is low on memory, so TwoDo will classify tasks with instant rules instead of the AI model.</string>
+    <string name="setup_error_format">Download failed: %1$s</string>
+    <string name="setup_retry">Try again</string>
+
+    <string name="banner_ai_off">On-device AI isn\'t set up — quick rules are sorting your tasks.</string>
+    <string name="banner_set_up">Set up</string>
+
+    <string name="task_add_hint">Add a task…</string>
+    <string name="task_add_cd">Add task</string>
+    <string name="task_do_it_now">Do it now</string>
+    <string name="task_more_cd">More options</string>
+    <string name="task_change_bucket">Change bucket</string>
+    <string name="task_delete">Delete</string>
+
+    <string name="bucket_two_min">⚡ 2 min</string>
+    <string name="bucket_thirty_min">⏱️ 30 min</string>
+    <string name="bucket_long">🏗️ Long</string>
+    <string name="bucket_unclassified">🤔 Unclassified</string>
+    <string name="bucket_empty">Nothing here yet</string>
+
+    <string name="override_title">Move to bucket</string>
+    <string name="override_two_min_desc">Knock it out right now</string>
+    <string name="override_thirty_min_desc">One focused session</string>
+    <string name="override_long_desc">Needs planning or several steps</string>
+
+    <string name="tasks_empty_title">All clear!</string>
+    <string name="tasks_empty_subtitle">Capture a task below — TwoDo will sort it for you.</string>
+</resources>
