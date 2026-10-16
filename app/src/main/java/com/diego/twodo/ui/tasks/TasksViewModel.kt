@@ -1,5 +1,6 @@
 package com.diego.twodo.ui.tasks
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diego.twodo.domain.manager.ModelManager
@@ -9,7 +10,10 @@ import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.domain.repository.ClassificationRepository
 import com.diego.twodo.domain.repository.TaskRepository
+import com.diego.twodo.widget.TasksWidget
+import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -18,6 +22,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val taskRepository: TaskRepository,
     private val classificationRepository: ClassificationRepository,
     private val modelManager: ModelManager,
@@ -41,20 +46,30 @@ class TasksViewModel @Inject constructor(
 
     fun addTask(title: String) {
         if (title.isBlank()) return
-        viewModelScope.launch { classificationRepository.captureTask(title.trim()) }
+        viewModelScope.launch {
+            classificationRepository.captureTask(title.trim())
+            TasksWidget().updateAll(context)
+        }
     }
 
     fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
-        viewModelScope.launch { taskRepository.toggleTaskCompletion(id, isCompleted) }
+        viewModelScope.launch {
+            taskRepository.toggleTaskCompletion(id, isCompleted)
+            TasksWidget().updateAll(context)
+        }
     }
 
     fun overrideBucket(id: Long, bucket: TaskBucket) {
         viewModelScope.launch {
             taskRepository.updateTaskBucket(id, bucket, BucketSource.USER)
+            TasksWidget().updateAll(context)
         }
     }
 
     fun deleteTask(id: Long) {
-        viewModelScope.launch { taskRepository.deleteTaskById(id) }
+        viewModelScope.launch {
+            taskRepository.deleteTaskById(id)
+            TasksWidget().updateAll(context)
+        }
     }
 }

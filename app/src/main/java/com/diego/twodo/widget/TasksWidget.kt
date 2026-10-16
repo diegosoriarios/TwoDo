@@ -2,9 +2,6 @@ package com.diego.twodo.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
@@ -36,52 +33,72 @@ import com.diego.twodo.MainActivity
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
+import kotlinx.coroutines.flow.first
+
+private data class WidgetStrings(
+    val appName: String,
+    val pendingCount: String,
+    val emptyTitle: String,
+    val addTask: String,
+    val more: String?,
+)
 
 class TasksWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
+        val tasks = taskRepository.getActiveTasks().first()
+        val sorted = tasks.sortedWith(
+            compareBy({ bucketOrder(it.bucket) }, { it.createdAt }),
+        )
+        val strings = WidgetStrings(
+            appName = context.getString(R.string.app_name),
+            pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
+            emptyTitle = context.getString(R.string.widget_empty_title),
+            addTask = context.getString(R.string.widget_add_task),
+            more = if (sorted.size > MAX_TASK_ROWS) {
+                context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
+            } else {
+                null
+            },
+        )
         provideContent {
-            val tasks by taskRepository.getActiveTasks().collectAsState(initial = emptyList())
             GlanceTheme {
-                TasksWidgetContent(tasks)
+                TasksWidgetContent(sorted, strings)
             }
         }
     }
 
     @Composable
-    private fun TasksWidgetContent(tasks: List<Task>) {
+    private fun TasksWidgetContent(tasks: List<Task>, strings: WidgetStrings) {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(GlanceTheme.colors.widgetBackground)
                 .padding(12.dp),
         ) {
-            WidgetHeader(tasks.size)
+            WidgetHeader(tasks.size, strings)
             if (tasks.isEmpty()) {
-                EmptyState()
+                EmptyState(strings.emptyTitle)
             } else {
-                val sorted = tasks.sortedWith(
-                    compareBy({ bucketOrder(it.bucket) }, { it.createdAt }),
-                )
-                sorted.take(MAX_TASK_ROWS).forEach { task ->
+                tasks.take(MAX_TASK_ROWS).forEach { task ->
                     TaskRow(task)
                 }
-                if (sorted.size > MAX_TASK_ROWS) {
+                strings.more?.let { extraText ->
                     Text(
-                        text = stringResource(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS),
+                        text = extraText,
                         style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurface),
                         modifier = GlanceModifier.padding(vertical = 2.dp),
                     )
                 }
                 Spacer(modifier = GlanceModifier.height(4.dp))
-                AddTaskButton()
+                AddTaskButton(strings.addTask)
             }
         }
     }
 
     @Composable
-    private fun WidgetHeader(pendingCount: Int) {
+    private fun WidgetHeader(pendingCount: Int, strings: WidgetStrings) {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
@@ -89,7 +106,7 @@ class TasksWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.app_name),
+                text = strings.appName,
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
@@ -97,7 +114,7 @@ class TasksWidget : GlanceAppWidget() {
                 ),
             )
             Text(
-                text = stringResource(R.string.widget_pending_count, pendingCount),
+                text = strings.pendingCount,
                 style = TextStyle(
                     fontSize = 12.sp,
                     color = GlanceTheme.colors.onSurface,
@@ -109,7 +126,7 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun EmptyState() {
+    private fun EmptyState(emptyTitle: String) {
         Box(
             modifier = GlanceModifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
@@ -118,7 +135,7 @@ class TasksWidget : GlanceAppWidget() {
                 Text(text = "🎉", style = TextStyle(fontSize = 24.sp))
                 Spacer(modifier = GlanceModifier.height(4.dp))
                 Text(
-                    text = stringResource(R.string.widget_empty_title),
+                    text = emptyTitle,
                     style = TextStyle(fontSize = 14.sp, color = GlanceTheme.colors.onSurface),
                 )
             }
@@ -153,7 +170,7 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun AddTaskButton() {
+    private fun AddTaskButton(addTaskLabel: String) {
         Box(
             modifier = GlanceModifier
                 .fillMaxWidth()
@@ -164,7 +181,7 @@ class TasksWidget : GlanceAppWidget() {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(R.string.widget_add_task),
+                text = addTaskLabel,
                 style = TextStyle(
                     fontWeight = FontWeight.Medium,
                     color = GlanceTheme.colors.onPrimary,
