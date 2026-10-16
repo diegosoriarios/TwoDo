@@ -48,7 +48,6 @@ fun ModelSetupScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
             verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(text = "⚡⏱️🏗️", style = MaterialTheme.typography.displayMedium)
             Text(
                 text = stringResource(R.string.setup_title),
                 style = MaterialTheme.typography.headlineMedium,

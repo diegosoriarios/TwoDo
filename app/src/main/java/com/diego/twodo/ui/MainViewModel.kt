@@ -25,6 +25,12 @@ class MainViewModel @Inject constructor(
     ) { dismissed, status -> !dismissed && status !is ModelStatus.Ready }
         .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = true)
 
+    val isWelcomeCompleted: StateFlow<Boolean> = onboardingPreferences.isWelcomeCompleted
+
+    fun completeWelcome() {
+        viewModelScope.launch { onboardingPreferences.setWelcomeCompleted(true) }
+    }
+
     fun showModelSetup() {
         viewModelScope.launch { onboardingPreferences.setOnboardingDismissed(false) }
     }

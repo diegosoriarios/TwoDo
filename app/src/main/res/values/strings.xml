@@ -1,8 +1,12 @@
 <resources>
-    <string name="app_name">TwoDo</string>
+    <string name="app_name">Two.do</string>
+
+    <string name="welcome_title">Two.do as you want it</string>
+    <string name="welcome_body">Planning is the process of thinking about the activities required to achieve a desired goal.</string>
+    <string name="welcome_start">Let\'s Start</string>
 
     <string name="setup_title">Set up on-device AI</string>
-    <string name="setup_description">TwoDo sorts every task into ⚡ 2 min, ⏱️ 30 min or 🏗️ long. An AI model running entirely on your phone makes the sorting smarter — nothing ever leaves your device.</string>
+    <string name="setup_description">Two.do sorts every task into ⚡ 2 min, ⏱️ 30 min or 🏗️ long. An AI model running entirely on your phone makes the sorting smarter — nothing ever leaves your device.</string>
     <string name="setup_download_hint">One-time Wi-Fi download. Everything runs offline afterwards.</string>
     <string name="setup_download">Download model (Wi-Fi)</string>
     <string name="setup_resume">Resume download</string>
@@ -14,9 +18,18 @@
     <string name="setup_progress_format">Downloading… %1$d%%</string>
     <string name="setup_waiting_network">Waiting for a network connection… the download will start automatically.</string>
     <string name="setup_download_mobile">Use mobile data instead</string>
-    <string name="setup_low_ram">This device is low on memory, so TwoDo will classify tasks with instant rules instead of the AI model.</string>
+    <string name="setup_low_ram">This device is low on memory, so Two.do will classify tasks with instant rules instead of the AI model.</string>
     <string name="setup_error_format">Download failed: %1$s</string>
     <string name="setup_retry">Try again</string>
+
+    <string name="task_list_title">Task list</string>
+    <string name="add_label">Add</string>
+    <string name="calendar_cd">Calendar</string>
+    <string name="summary_task_count_format">%1$d tasks</string>
+    <string name="card_two_min_label">2 minutes</string>
+    <string name="card_thirty_min_label">30 minutes</string>
+    <string name="card_long_label">Long</string>
+    <string name="card_unclassified_label">Unclassified</string>
 
     <string name="banner_ai_off">On-device AI isn\'t set up — quick rules are sorting your tasks.</string>
     <string name="banner_set_up">Set up</string>
@@ -40,7 +53,7 @@
     <string name="override_long_desc">Needs planning or several steps</string>
 
     <string name="tasks_empty_title">All clear!</string>
-    <string name="tasks_empty_subtitle">Capture a task below — TwoDo will sort it for you.</string>
+    <string name="tasks_empty_subtitle">Capture a task below — Two.do will sort it for you.</string>
 
     <string name="widget_description">Pending tasks with ⚡ 2-minute items first — check them off in place.</string>
     <string name="widget_pending_count">%1$d pending</string>
