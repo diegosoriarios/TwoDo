@@ -13,7 +13,11 @@ import com.diego.twodo.ui.onboarding.ModelSetupScreen
 import com.diego.twodo.ui.tasks.TasksScreen
 
 @Composable
-fun TwoDoApp(mainViewModel: MainViewModel = hiltViewModel()) {
+fun TwoDoApp(
+    focusQuickAdd: Boolean = false,
+    onQuickAddHandled: () -> Unit = {},
+    mainViewModel: MainViewModel = hiltViewModel(),
+) {
     val showModelSetup by mainViewModel.showModelSetup.collectAsState()
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -21,7 +25,11 @@ fun TwoDoApp(mainViewModel: MainViewModel = hiltViewModel()) {
             if (showSetup) {
                 ModelSetupScreen()
             } else {
-                TasksScreen(onOpenModelSetup = mainViewModel::showModelSetup)
+                TasksScreen(
+                    focusQuickAdd = focusQuickAdd,
+                    onQuickAddHandled = onQuickAddHandled,
+                    onOpenModelSetup = mainViewModel::showModelSetup,
+                )
             }
         }
     }

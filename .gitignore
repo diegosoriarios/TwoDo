@@ -9,6 +9,7 @@
 /.idea/assetWizardSettings.xml
 /.idea/deploymentTargetSelector.xml
 .DS_Store
+*.jks
 /build
 /captures
 .externalNativeBuild

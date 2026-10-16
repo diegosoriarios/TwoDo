@@ -51,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -75,6 +78,8 @@ import com.diego.twodo.domain.model.TaskBucket
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TasksScreen(
+    focusQuickAdd: Boolean = false,
+    onQuickAddHandled: () -> Unit = {},
     onOpenModelSetup: () -> Unit,
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
@@ -83,6 +88,16 @@ fun TasksScreen(
 
     var newTaskTitle by rememberSaveable { mutableStateOf("") }
     var taskToRelabelId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val quickAddFocusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(focusQuickAdd) {
+        if (focusQuickAdd) {
+            quickAddFocusRequester.requestFocus()
+            keyboardController?.show()
+            onQuickAddHandled()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -96,6 +111,7 @@ fun TasksScreen(
             QuickAddBar(
                 value = newTaskTitle,
                 onValueChange = { newTaskTitle = it },
+                focusRequester = quickAddFocusRequester,
                 onSubmit = {
                     viewModel.addTask(newTaskTitle)
                     newTaskTitle = ""
@@ -453,6 +469,7 @@ private fun BucketOption(
 private fun QuickAddBar(
     value: String,
     onValueChange: (String) -> Unit,
+    focusRequester: FocusRequester,
     onSubmit: () -> Unit,
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -470,7 +487,9 @@ private fun QuickAddBar(
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
                 placeholder = { Text(stringResource(R.string.task_add_hint)) },
                 singleLine = true,
                 shape = MaterialTheme.shapes.extraLarge,
