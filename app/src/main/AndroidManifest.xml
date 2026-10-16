@@ -33,6 +33,8 @@
             android:name=".ui.quickadd.QuickAddActivity"
             android:excludeFromRecents="true"
             android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
             android:theme="@style/Theme.TwoDo.QuickAdd"
             android:windowSoftInputMode="adjustResize" />
 
