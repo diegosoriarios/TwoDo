@@ -29,6 +29,13 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ui.quickadd.QuickAddActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:theme="@style/Theme.TwoDo.QuickAdd"
+            android:windowSoftInputMode="adjustResize" />
+
         <receiver
             android:name=".widget.TasksWidgetReceiver"
             android:exported="false"

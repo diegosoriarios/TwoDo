@@ -2,4 +2,12 @@
 <resources>
 
     <style name="Theme.TwoDo" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.TwoDo.QuickAdd" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
 </resources>

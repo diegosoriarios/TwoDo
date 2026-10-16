@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
@@ -25,14 +28,15 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
-import com.diego.twodo.MainActivity
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
+import com.diego.twodo.ui.quickadd.QuickAddActivity
 import kotlinx.coroutines.flow.first
 
 private data class WidgetStrings(
@@ -40,6 +44,7 @@ private data class WidgetStrings(
     val pendingCount: String,
     val emptyTitle: String,
     val addTask: String,
+    val addTaskCd: String,
     val more: String?,
 )
 
@@ -56,6 +61,7 @@ class TasksWidget : GlanceAppWidget() {
             pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
             emptyTitle = context.getString(R.string.widget_empty_title),
             addTask = context.getString(R.string.widget_add_task),
+            addTaskCd = context.getString(R.string.task_add_cd),
             more = if (sorted.size > MAX_TASK_ROWS) {
                 context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
             } else {
@@ -122,6 +128,19 @@ class TasksWidget : GlanceAppWidget() {
                 ),
                 modifier = GlanceModifier.defaultWeight(),
             )
+            Box(
+                modifier = GlanceModifier
+                    .size(28.dp)
+                    .clickable(actionStartActivity<QuickAddActivity>()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_add),
+                    contentDescription = strings.addTaskCd,
+                    modifier = GlanceModifier.size(20.dp),
+                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
+                )
+            }
         }
     }
 
@@ -176,7 +195,7 @@ class TasksWidget : GlanceAppWidget() {
                 .fillMaxWidth()
                 .cornerRadius(12.dp)
                 .background(GlanceTheme.colors.primary)
-                .clickable(actionStartActivity<MainActivity>())
+                .clickable(actionStartActivity<QuickAddActivity>())
                 .padding(vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
