@@ -7,13 +7,11 @@ import androidx.compose.ui.unit.sp
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.CheckBox
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
@@ -29,21 +27,29 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
+import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
+import androidx.glance.unit.ColorProvider
+import androidx.compose.ui.graphics.Color
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.ui.quickadd.QuickAddActivity
 import kotlinx.coroutines.flow.first
 
+private val WidgetBackground = ColorProvider(Color(0xFF121212))
+private val WidgetSurface = ColorProvider(Color(0xFF252525))
+private val WidgetTextPrimary = ColorProvider(Color(0xFFFFFFFF))
+private val WidgetTextSecondary = ColorProvider(Color(0xFFA0A0A0))
+private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
+
 private data class WidgetStrings(
     val appName: String,
     val pendingCount: String,
     val emptyTitle: String,
-    val addTask: String,
     val addTaskCd: String,
     val more: String?,
 )
@@ -60,7 +66,6 @@ class TasksWidget : GlanceAppWidget() {
             appName = context.getString(R.string.app_name),
             pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
             emptyTitle = context.getString(R.string.widget_empty_title),
-            addTask = context.getString(R.string.widget_add_task),
             addTaskCd = context.getString(R.string.task_add_cd),
             more = if (sorted.size > MAX_TASK_ROWS) {
                 context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
@@ -69,9 +74,7 @@ class TasksWidget : GlanceAppWidget() {
             },
         )
         provideContent {
-            GlanceTheme {
-                TasksWidgetContent(sorted, strings)
-            }
+            TasksWidgetContent(sorted, strings)
         }
     }
 
@@ -80,7 +83,7 @@ class TasksWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(GlanceTheme.colors.widgetBackground)
+                .background(WidgetBackground)
                 .padding(12.dp),
         ) {
             WidgetHeader(tasks.size, strings)
@@ -89,16 +92,15 @@ class TasksWidget : GlanceAppWidget() {
             } else {
                 tasks.take(MAX_TASK_ROWS).forEach { task ->
                     TaskRow(task)
+                    Spacer(modifier = GlanceModifier.height(6.dp))
                 }
                 strings.more?.let { extraText ->
                     Text(
                         text = extraText,
-                        style = TextStyle(fontSize = 12.sp, color = GlanceTheme.colors.onSurface),
+                        style = TextStyle(fontSize = 12.sp, color = WidgetTextSecondary),
                         modifier = GlanceModifier.padding(vertical = 2.dp),
                     )
                 }
-                Spacer(modifier = GlanceModifier.height(4.dp))
-                AddTaskButton(strings.addTask)
             }
         }
     }
@@ -108,7 +110,7 @@ class TasksWidget : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .padding(bottom = 6.dp),
+                .padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -116,14 +118,14 @@ class TasksWidget : GlanceAppWidget() {
                 style = TextStyle(
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = GlanceTheme.colors.onSurface,
+                    color = WidgetTextPrimary,
                 ),
             )
             Text(
                 text = strings.pendingCount,
                 style = TextStyle(
                     fontSize = 12.sp,
-                    color = GlanceTheme.colors.onSurface,
+                    color = WidgetTextSecondary,
                     textAlign = TextAlign.End,
                 ),
                 modifier = GlanceModifier.defaultWeight(),
@@ -138,7 +140,7 @@ class TasksWidget : GlanceAppWidget() {
                     provider = ImageProvider(R.drawable.ic_add),
                     contentDescription = strings.addTaskCd,
                     modifier = GlanceModifier.size(20.dp),
-                    colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
+                    colorFilter = ColorFilter.tint(WidgetCoral),
                 )
             }
         }
@@ -155,7 +157,7 @@ class TasksWidget : GlanceAppWidget() {
                 Spacer(modifier = GlanceModifier.height(4.dp))
                 Text(
                     text = emptyTitle,
-                    style = TextStyle(fontSize = 14.sp, color = GlanceTheme.colors.onSurface),
+                    style = TextStyle(fontSize = 14.sp, color = WidgetTextSecondary),
                 )
             }
         }
@@ -169,42 +171,24 @@ class TasksWidget : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
+                .height(40.dp)
+                .cornerRadius(4.dp)
+                .background(WidgetSurface)
                 .clickable(toggleAction)
-                .padding(vertical = 6.dp),
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            CheckBox(checked = false, onCheckedChange = toggleAction)
-            Text(
-                text = bucketEmoji(task.bucket),
-                style = TextStyle(fontSize = 13.sp),
-                modifier = GlanceModifier.padding(horizontal = 6.dp),
+            Image(
+                provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
+                contentDescription = null,
+                modifier = GlanceModifier.size(18.dp),
             )
+            Spacer(modifier = GlanceModifier.width(12.dp))
             Text(
                 text = task.title,
-                style = TextStyle(fontSize = 14.sp, color = GlanceTheme.colors.onSurface),
+                style = TextStyle(fontSize = 14.sp, color = WidgetTextPrimary),
                 maxLines = 1,
                 modifier = GlanceModifier.defaultWeight(),
-            )
-        }
-    }
-
-    @Composable
-    private fun AddTaskButton(addTaskLabel: String) {
-        Box(
-            modifier = GlanceModifier
-                .fillMaxWidth()
-                .cornerRadius(12.dp)
-                .background(GlanceTheme.colors.primary)
-                .clickable(actionStartActivity<QuickAddActivity>())
-                .padding(vertical = 8.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = addTaskLabel,
-                style = TextStyle(
-                    fontWeight = FontWeight.Medium,
-                    color = GlanceTheme.colors.onPrimary,
-                ),
             )
         }
     }
@@ -214,13 +198,6 @@ class TasksWidget : GlanceAppWidget() {
         TaskBucket.THIRTY_MIN -> 1
         TaskBucket.LONG -> 2
         TaskBucket.UNCLASSIFIED -> 3
-    }
-
-    private fun bucketEmoji(bucket: TaskBucket): String = when (bucket) {
-        TaskBucket.TWO_MIN -> "⚡"
-        TaskBucket.THIRTY_MIN -> "⏱️"
-        TaskBucket.LONG -> "🏗️"
-        TaskBucket.UNCLASSIFIED -> "🤔"
     }
 
     private companion object {

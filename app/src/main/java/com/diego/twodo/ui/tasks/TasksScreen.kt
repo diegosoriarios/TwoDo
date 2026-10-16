@@ -22,7 +22,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -288,7 +288,7 @@ private fun AddControl(
                     keyboardController?.hide()
                 },
                 enabled = value.isNotBlank(),
-                colors = ButtonDefaults.filledIconButtonColors(
+                colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = Coral,
                     contentColor = TextPrimary,
                 ),

@@ -58,6 +58,5 @@
     <string name="widget_description">Pending tasks with ⚡ 2-minute items first — check them off in place.</string>
     <string name="widget_pending_count">%1$d pending</string>
     <string name="widget_empty_title">All clear 🎉</string>
-    <string name="widget_add_task">+ Add task</string>
     <string name="widget_more_format">+%1$d more</string>
 </resources>
