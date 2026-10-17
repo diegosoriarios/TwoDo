@@ -231,21 +231,6 @@ fun TaskComposerSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(if (text.isNotBlank()) Coral else SurfaceDark)
-                        .clickable(enabled = text.isNotBlank()) { submit() },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.task_add_cd),
-                        tint = if (text.isNotBlank()) TextPrimary else TextSecondary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
                 Row(
                     modifier = Modifier
                         .weight(1f)
@@ -289,6 +274,21 @@ fun TaskComposerSheet(
                         } else {
                             null
                         },
+                    )
+                }
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Coral)
+                        .clickable(enabled = text.isNotBlank()) { submit() },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.task_add_cd),
+                        tint = TextPrimary,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
