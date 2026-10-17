@@ -13,6 +13,7 @@ data class TaskEntity(
     val bucket: TaskBucket = TaskBucket.UNCLASSIFIED,
     val bucketSource: BucketSource = BucketSource.HEURISTIC,
     val isCompleted: Boolean = false,
+    val completedAt: Long? = null,
     val dueDate: Long? = null,
     val reminderAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),

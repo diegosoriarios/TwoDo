@@ -60,6 +60,7 @@
     <string name="tab_calendar">Calendar</string>
     <string name="calendar_empty_title">Nothing due this day</string>
     <string name="calendar_empty_subtitle">Pick another date, or add a task with a due date.</string>
+    <string name="calendar_completed_title">Completed</string>
 
     <string name="composer_category">Category</string>
     <string name="composer_auto">Auto</string>

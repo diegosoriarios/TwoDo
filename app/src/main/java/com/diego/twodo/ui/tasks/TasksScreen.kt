@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +67,7 @@ fun TasksScreen(
 
     var showComposer by rememberSaveable { mutableStateOf(false) }
     var editingTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var taskToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(focusQuickAdd) {
         if (focusQuickAdd) {
@@ -104,7 +106,7 @@ fun TasksScreen(
                             task = task,
                             onToggle = viewModel::toggleTaskCompletion,
                             onEdit = { editingTaskId = it.id },
-                            onDelete = viewModel::deleteTask,
+                            onDelete = { taskToDeleteId = it },
                         )
                     }
                 }
@@ -147,6 +149,31 @@ fun TasksScreen(
             initialBucket = task.bucket,
             initialDueDate = task.dueDate,
             initialReminderAt = task.reminderAt,
+        )
+    }
+
+    if (taskToDeleteId != null) {
+        AlertDialog(
+            onDismissRequest = { taskToDeleteId = null },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    val id = taskToDeleteId
+                    if (id != null) viewModel.deleteTask(id)
+                    taskToDeleteId = null
+                }) {
+                    Text(
+                        text = stringResource(R.string.delete_confirm_action),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { taskToDeleteId = null }) {
+                    Text(stringResource(R.string.composer_cancel))
+                }
+            },
         )
     }
 }

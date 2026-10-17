@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface TaskRepository {
     fun getActiveTasks(): Flow<List<Task>>
+    fun getCompletedTasks(): Flow<List<Task>>
     fun getAllTasks(): Flow<List<Task>>
     fun getActiveTasksByBucket(bucket: TaskBucket): Flow<List<Task>>
     fun getUnclassifiedTasks(): Flow<List<Task>>

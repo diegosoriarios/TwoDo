@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,11 +47,14 @@ fun CalendarScreen(
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val tasks by viewModel.tasks.collectAsState()
+    val completedTasks by viewModel.completedTasks.collectAsState()
     var selectedEpochDay by rememberSaveable { mutableLongStateOf(LocalDate.now().toEpochDay()) }
     var editingTaskId by remember { mutableStateOf<Long?>(null) }
+    var taskToDeleteId by remember { mutableStateOf<Long?>(null) }
     val selectedDate = LocalDate.ofEpochDay(selectedEpochDay)
-    val tasksForDay = remember(tasks, selectedEpochDay) {
-        tasks.filterDueOn(selectedDate)
+    val tasksForDay = remember(tasks, selectedEpochDay) { tasks.filterDueOn(selectedDate) }
+    val completedForDay = remember(completedTasks, selectedEpochDay) {
+        completedTasks.filterCompletedOn(selectedDate)
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -81,14 +86,30 @@ fun CalendarScreen(
                         task = task,
                         onToggle = viewModel::toggleTaskCompletion,
                         onEdit = { editingTaskId = it.id },
-                        onDelete = viewModel::deleteTask,
+                        onDelete = { taskToDeleteId = it },
+                    )
+                }
+            }
+            if (completedForDay.isNotEmpty()) {
+                item(key = "completed_section") {
+                    SectionHeader(
+                        title = stringResource(R.string.calendar_completed_title),
+                        dateLabel = selectedDate.format(sectionDateFormatter),
+                    )
+                }
+                items(completedForDay, key = { it.id }) { task ->
+                    TaskRow(
+                        task = task,
+                        onToggle = viewModel::toggleTaskCompletion,
+                        onEdit = { editingTaskId = it.id },
+                        onDelete = { taskToDeleteId = it },
                     )
                 }
             }
         }
     }
 
-    tasks.firstOrNull { it.id == editingTaskId }?.let { task ->
+    (tasks + completedTasks).firstOrNull { it.id == editingTaskId }?.let { task ->
         TaskComposerSheet(
             onDismiss = { editingTaskId = null },
             onSubmit = { title, bucket, dueDate, reminderAt ->
@@ -101,6 +122,17 @@ fun CalendarScreen(
             initialReminderAt = task.reminderAt,
         )
     }
+
+    if (taskToDeleteId != null) {
+        DeleteTaskDialog(
+            onDismiss = { taskToDeleteId = null },
+            onConfirm = {
+                val id = taskToDeleteId
+                if (id != null) viewModel.deleteTask(id)
+                taskToDeleteId = null
+            },
+        )
+    }
 }
 
 private fun List<Task>.filterDueOn(date: LocalDate): List<Task> {
@@ -109,6 +141,38 @@ private fun List<Task>.filterDueOn(date: LocalDate): List<Task> {
     val dayEnd = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
     return filter { it.dueDate != null && it.dueDate >= dayStart && it.dueDate < dayEnd }
         .sortedForDisplay()
+}
+
+private fun List<Task>.filterCompletedOn(date: LocalDate): List<Task> {
+    val zone = ZoneId.systemDefault()
+    val dayStart = date.atStartOfDay(zone).toInstant().toEpochMilli()
+    val dayEnd = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    return filter { it.completedAt != null && it.completedAt >= dayStart && it.completedAt < dayEnd }
+}
+
+@Composable
+private fun DeleteTaskDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.delete_confirm_title)) },
+        text = { Text(stringResource(R.string.delete_confirm_text)) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(
+                    text = stringResource(R.string.delete_confirm_action),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.composer_cancel))
+            }
+        },
+    )
 }
 
 @Composable

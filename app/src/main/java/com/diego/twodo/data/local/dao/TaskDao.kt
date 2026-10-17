@@ -17,6 +17,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isCompleted = 0 ORDER BY createdAt DESC")
     fun getActiveTasks(): Flow<List<TaskEntity>>
 
+    @Query("SELECT * FROM tasks WHERE isCompleted = 1 ORDER BY completedAt DESC")
+    fun getCompletedTasks(): Flow<List<TaskEntity>>
+
     @Query("SELECT * FROM tasks ORDER BY createdAt DESC")
     fun getAllTasks(): Flow<List<TaskEntity>>
 
@@ -44,8 +47,13 @@ interface TaskDao {
     @Update
     suspend fun updateTask(task: TaskEntity)
 
-    @Query("UPDATE tasks SET isCompleted = :isCompleted, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateTaskCompletion(id: Long, isCompleted: Boolean, updatedAt: Long)
+    @Query("UPDATE tasks SET isCompleted = :isCompleted, completedAt = :completedAt, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateTaskCompletion(
+        id: Long,
+        isCompleted: Boolean,
+        completedAt: Long?,
+        updatedAt: Long,
+    )
 
     @Query("UPDATE tasks SET bucket = :bucket, bucketSource = :bucketSource, updatedAt = :updatedAt WHERE id = :id")
     suspend fun updateTaskBucket(

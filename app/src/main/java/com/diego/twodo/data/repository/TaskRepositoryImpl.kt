@@ -22,6 +22,10 @@ class TaskRepositoryImpl @Inject constructor(
         return taskDao.getActiveTasks().map { entities -> entities.map { it.toDomain() } }
     }
 
+    override fun getCompletedTasks(): Flow<List<Task>> {
+        return taskDao.getCompletedTasks().map { entities -> entities.map { it.toDomain() } }
+    }
+
     override fun getAllTasks(): Flow<List<Task>> {
         return taskDao.getAllTasks().map { entities -> entities.map { it.toDomain() } }
     }
@@ -104,9 +108,20 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
-        taskDao.updateTaskCompletion(id, isCompleted, System.currentTimeMillis())
+        val task = taskDao.getTaskByIdSync(id) ?: return
+        val now = System.currentTimeMillis()
+        taskDao.updateTaskCompletion(
+            id = id,
+            isCompleted = isCompleted,
+            completedAt = if (isCompleted) now else null,
+            updatedAt = now,
+        )
         if (isCompleted) {
             reminderScheduler.cancel(id)
+        } else {
+            task.reminderAt
+                ?.takeIf { it > now }
+                ?.let { reminderScheduler.schedule(id, task.title, it) }
         }
     }
 
@@ -134,6 +149,7 @@ class TaskRepositoryImpl @Inject constructor(
         bucket = bucket,
         bucketSource = bucketSource,
         isCompleted = isCompleted,
+        completedAt = completedAt,
         dueDate = dueDate,
         reminderAt = reminderAt,
         createdAt = createdAt,
@@ -146,6 +162,7 @@ class TaskRepositoryImpl @Inject constructor(
         bucket = bucket,
         bucketSource = bucketSource,
         isCompleted = isCompleted,
+        completedAt = completedAt,
         dueDate = dueDate,
         reminderAt = reminderAt,
         createdAt = createdAt,

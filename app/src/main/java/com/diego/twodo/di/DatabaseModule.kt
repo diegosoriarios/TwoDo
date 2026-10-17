@@ -27,7 +27,10 @@ object DatabaseModule {
             context,
             TwoDoDatabase::class.java,
             "twodo_database",
-        ).addMigrations(TwoDoDatabase.MIGRATION_1_2).build()
+        ).addMigrations(
+            TwoDoDatabase.MIGRATION_1_2,
+            TwoDoDatabase.MIGRATION_2_3,
+        ).build()
     }
 
     @Provides

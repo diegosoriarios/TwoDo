@@ -30,6 +30,9 @@ class TasksViewModel @Inject constructor(
     val tasks: StateFlow<List<Task>> = taskRepository.getActiveTasks()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val completedTasks: StateFlow<List<Task>> = taskRepository.getCompletedTasks()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     val modelStatus: StateFlow<ModelStatus> = modelManager.modelStatus
 
     val canUseLlm: Boolean
