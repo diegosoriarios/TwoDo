@@ -48,6 +48,8 @@ fun CalendarScreen(
 ) {
     val tasks by viewModel.tasks.collectAsState()
     val completedTasks by viewModel.completedTasks.collectAsState()
+    val labels by viewModel.labels.collectAsState()
+    val taskLabelMap by viewModel.taskLabelMap.collectAsState()
     var selectedEpochDay by rememberSaveable { mutableLongStateOf(LocalDate.now().toEpochDay()) }
     var editingTaskId by remember { mutableStateOf<Long?>(null) }
     var taskToDeleteId by remember { mutableStateOf<Long?>(null) }
@@ -112,14 +114,17 @@ fun CalendarScreen(
     (tasks + completedTasks).firstOrNull { it.id == editingTaskId }?.let { task ->
         TaskComposerSheet(
             onDismiss = { editingTaskId = null },
-            onSubmit = { title, bucket, dueDate, reminderAt ->
-                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt)
+            onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
+                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt, labelIds)
                 editingTaskId = null
             },
+            labels = labels,
+            onCreateLabel = viewModel::createLabel,
             initialTitle = task.title,
             initialBucket = task.bucket,
             initialDueDate = task.dueDate,
             initialReminderAt = task.reminderAt,
+            initialLabelIds = taskLabelMap[task.id].orEmpty().map { it.id }.toSet(),
         )
     }
 

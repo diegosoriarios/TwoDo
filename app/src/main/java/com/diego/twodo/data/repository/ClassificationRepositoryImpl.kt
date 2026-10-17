@@ -27,6 +27,7 @@ class ClassificationRepositoryImpl @Inject constructor(
         userSelectedBucket: TaskBucket?,
         dueDate: Long?,
         reminderAt: Long?,
+        labelIds: Set<Long>,
     ): Task = withContext(bgDispatcher) {
         val trimmedTitle = title.trim()
 
@@ -38,6 +39,7 @@ class ClassificationRepositoryImpl @Inject constructor(
                 dueDate = dueDate,
                 reminderAt = reminderAt,
             )
+            taskRepository.setTaskLabels(id, labelIds)
             return@withContext taskRepository.getTaskByIdSync(id)
                 ?: Task(id = id, title = trimmedTitle, bucket = userSelectedBucket, bucketSource = BucketSource.USER)
         }
@@ -51,6 +53,7 @@ class ClassificationRepositoryImpl @Inject constructor(
             dueDate = dueDate,
             reminderAt = reminderAt,
         )
+        taskRepository.setTaskLabels(taskId, labelIds)
 
         val task = taskRepository.getTaskByIdSync(taskId)
             ?: Task(id = taskId, title = trimmedTitle, bucket = heuristicResult.category, bucketSource = BucketSource.HEURISTIC)

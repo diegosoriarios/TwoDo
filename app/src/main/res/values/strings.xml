@@ -71,6 +71,11 @@
     <string name="composer_weekend">Weekend</string>
     <string name="composer_pick_date">Pick date</string>
     <string name="composer_no_date">No date</string>
+    <string name="composer_label">Label</string>
+    <string name="composer_new_label">New label…</string>
+    <string name="label_dialog_title">New label</string>
+    <string name="label_name_hint">Name</string>
+    <string name="composer_labels_more_format">%1$s +%2$d</string>
     <string name="composer_remind_me">Remind me</string>
     <string name="composer_reminder_in_1h">In 1 hour</string>
     <string name="composer_reminder_tomorrow_9">Tomorrow 9:00</string>

@@ -1,13 +1,18 @@
 package com.diego.twodo.data.repository
 
+import com.diego.twodo.data.local.dao.LabelDao
 import com.diego.twodo.data.local.dao.TaskDao
+import com.diego.twodo.data.local.entity.LabelEntity
 import com.diego.twodo.data.local.entity.TaskEntity
+import com.diego.twodo.data.local.entity.TaskLabelJoin
 import com.diego.twodo.domain.model.BucketSource
+import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.domain.repository.TaskRepository
 import com.diego.twodo.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -15,6 +20,7 @@ import javax.inject.Singleton
 @Singleton
 class TaskRepositoryImpl @Inject constructor(
     private val taskDao: TaskDao,
+    private val labelDao: LabelDao,
     private val reminderScheduler: ReminderScheduler,
 ) : TaskRepository {
 
@@ -24,6 +30,30 @@ class TaskRepositoryImpl @Inject constructor(
 
     override fun getCompletedTasks(): Flow<List<Task>> {
         return taskDao.getCompletedTasks().map { entities -> entities.map { it.toDomain() } }
+    }
+
+    override fun getLabels(): Flow<List<Label>> {
+        return labelDao.getLabels().map { entities -> entities.map { it.toDomain() } }
+    }
+
+    override fun getTaskLabelMap(): Flow<Map<Long, List<Label>>> {
+        return combine(labelDao.getAllJoins(), labelDao.getLabels()) { joins, labels ->
+            val byId = labels.associateBy { it.id }
+            joins.groupBy({ it.taskId }) { join -> byId[join.labelId]?.toDomain() }
+                .mapValues { (_, values) -> values.filterNotNull() }
+        }
+    }
+
+    override suspend fun createLabel(name: String): Long {
+        val trimmed = name.trim()
+        if (trimmed.isEmpty()) return -1L
+        labelDao.getByName(trimmed)?.let { return it.id }
+        return labelDao.insertLabel(LabelEntity(name = trimmed))
+    }
+
+    override suspend fun setTaskLabels(taskId: Long, labelIds: Set<Long>) {
+        labelDao.clearJoinsForTask(taskId)
+        labelIds.forEach { labelId -> labelDao.insertJoin(TaskLabelJoin(taskId, labelId)) }
     }
 
     override fun getAllTasks(): Flow<List<Task>> {
@@ -85,6 +115,7 @@ class TaskRepositoryImpl @Inject constructor(
         bucket: TaskBucket?,
         dueDate: Long?,
         reminderAt: Long?,
+        labelIds: Set<Long>,
     ) {
         val current = taskDao.getTaskByIdSync(id) ?: return
         val newBucket = bucket ?: current.bucket
@@ -100,6 +131,7 @@ class TaskRepositoryImpl @Inject constructor(
                 updatedAt = System.currentTimeMillis(),
             )
         )
+        setTaskLabels(id, labelIds)
         when {
             reminderAt == null -> reminderScheduler.cancel(id)
             reminderAt != current.reminderAt || title != current.title ->
@@ -142,6 +174,11 @@ class TaskRepositoryImpl @Inject constructor(
         reminderScheduler.cancel(id)
         taskDao.deleteTaskById(id)
     }
+
+    private fun LabelEntity.toDomain(): Label = Label(
+        id = id,
+        name = name,
+    )
 
     private fun TaskEntity.toDomain(): Task = Task(
         id = id,

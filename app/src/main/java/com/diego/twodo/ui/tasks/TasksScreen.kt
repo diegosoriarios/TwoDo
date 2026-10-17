@@ -64,6 +64,8 @@ fun TasksScreen(
 ) {
     val tasks by viewModel.tasks.collectAsState()
     val modelStatus by viewModel.modelStatus.collectAsState()
+    val labels by viewModel.labels.collectAsState()
+    val taskLabelMap by viewModel.taskLabelMap.collectAsState()
 
     var showComposer by rememberSaveable { mutableStateOf(false) }
     var editingTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -131,24 +133,29 @@ fun TasksScreen(
     if (showComposer) {
         TaskComposerSheet(
             onDismiss = { showComposer = false },
-            onSubmit = { title, bucket, dueDate, reminderAt ->
-                viewModel.addTask(title, bucket, dueDate, reminderAt)
+            onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
+                viewModel.addTask(title, bucket, dueDate, reminderAt, labelIds)
                 showComposer = false
             },
+            labels = labels,
+            onCreateLabel = viewModel::createLabel,
         )
     }
 
     tasks.firstOrNull { it.id == editingTaskId }?.let { task ->
         TaskComposerSheet(
             onDismiss = { editingTaskId = null },
-            onSubmit = { title, bucket, dueDate, reminderAt ->
-                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt)
+            onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
+                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt, labelIds)
                 editingTaskId = null
             },
+            labels = labels,
+            onCreateLabel = viewModel::createLabel,
             initialTitle = task.title,
             initialBucket = task.bucket,
             initialDueDate = task.dueDate,
             initialReminderAt = task.reminderAt,
+            initialLabelIds = taskLabelMap[task.id].orEmpty().map { it.id }.toSet(),
         )
     }
 

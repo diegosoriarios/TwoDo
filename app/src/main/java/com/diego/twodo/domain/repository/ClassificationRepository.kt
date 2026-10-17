@@ -14,6 +14,7 @@ interface ClassificationRepository {
         userSelectedBucket: TaskBucket? = null,
         dueDate: Long? = null,
         reminderAt: Long? = null,
+        labelIds: Set<Long> = emptySet(),
     ): Task
 
     /**

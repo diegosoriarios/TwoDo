@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -61,11 +62,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.diego.twodo.R
+import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
@@ -83,18 +86,21 @@ private enum class PickerTarget { DUE_DATE, REMINDER }
 /**
  * Shared "new task" bottom sheet used by both the in-app flow and the widget's
  * QuickAddActivity. Pure UI — persistence happens through [onSubmit] at the call site.
- * Pass [initialTitle]/[initialBucket]/[initialDueDate]/[initialReminderAt] to edit
- * an existing task; leave them empty for new-task mode.
+ * Pass [initialTitle]/[initialBucket]/[initialDueDate]/[initialReminderAt]/
+ * [initialLabelIds] to edit an existing task; leave them empty for new-task mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskComposerSheet(
     onDismiss: () -> Unit,
-    onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?) -> Unit,
+    onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>) -> Unit,
+    labels: List<Label> = emptyList(),
+    onCreateLabel: ((name: String, onCreated: (Long) -> Unit) -> Unit)? = null,
     initialTitle: String = "",
     initialBucket: TaskBucket? = null,
     initialDueDate: Long? = null,
     initialReminderAt: Long? = null,
+    initialLabelIds: Set<Long> = emptySet(),
 ) {
     var text by rememberSaveable { mutableStateOf(initialTitle) }
     var bucketChoice by rememberSaveable { mutableStateOf(initialBucket.toBucketChoice()) }
@@ -102,6 +108,8 @@ fun TaskComposerSheet(
         mutableLongStateOf(initialDueDate?.let { TaskComposerDefaults.millisToEpochDay(it) } ?: -1L)
     }
     var reminderAt by rememberSaveable { mutableLongStateOf(initialReminderAt ?: -1L) }
+    var selectedLabelIds by rememberSaveable { mutableStateOf(initialLabelIds) }
+    var showNewLabelDialog by rememberSaveable { mutableStateOf(false) }
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var pendingReminderEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
 
@@ -132,6 +140,7 @@ fun TaskComposerSheet(
                 bucketChoice.toBucket(),
                 TaskComposerDefaults.epochDayToMillis(dueEpochDay),
                 reminderAt.takeIf { it != -1L },
+                selectedLabelIds,
             )
         }
     }
@@ -190,6 +199,22 @@ fun TaskComposerSheet(
                     onPick = { dueEpochDay = it },
                     onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
                     onClear = { dueEpochDay = -1L },
+                )
+                LabelSelector(
+                    labels = labels,
+                    selectedLabelIds = selectedLabelIds,
+                    onToggle = { labelId ->
+                        selectedLabelIds = if (labelId in selectedLabelIds) {
+                            selectedLabelIds - labelId
+                        } else {
+                            selectedLabelIds + labelId
+                        }
+                    },
+                    onNewLabel = if (onCreateLabel != null) {
+                        { showNewLabelDialog = true }
+                    } else {
+                        null
+                    },
                 )
                 RemindSelector(
                     reminderAt = reminderAt,
@@ -288,6 +313,13 @@ fun TaskComposerSheet(
         ) {
             TimePicker(state = timeState, modifier = Modifier.padding(16.dp))
         }
+    }
+
+    if (showNewLabelDialog && onCreateLabel != null) {
+        NewLabelDialog(
+            onCreate = { name -> onCreateLabel(name) { id -> if (id != -1L) selectedLabelIds = selectedLabelIds + id } },
+            onDismiss = { showNewLabelDialog = false },
+        )
     }
 
     LaunchedEffect(Unit) {
@@ -469,11 +501,89 @@ private fun RemindSelector(
 }
 
 @Composable
+private fun LabelSelector(
+    labels: List<Label>,
+    selectedLabelIds: Set<Long>,
+    onToggle: (Long) -> Unit,
+    onNewLabel: (() -> Unit)?,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selected = labels.filter { it.id in selectedLabelIds }
+    val label = when {
+        selected.isEmpty() -> stringResource(R.string.composer_label)
+        selected.size == 1 -> selected.first().name
+        else -> stringResource(
+            R.string.composer_labels_more_format,
+            selected.first().name,
+            selected.size - 1,
+        )
+    }
+    SelectorButton(
+        icon = null,
+        iconLabel = "#",
+        label = label,
+        active = selected.isNotEmpty(),
+        onClick = { expanded = true },
+    )
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        labels.forEach { labelItem ->
+            MenuOption(
+                label = labelItem.name,
+                selected = labelItem.id in selectedLabelIds,
+            ) {
+                onToggle(labelItem.id)
+                expanded = false
+            }
+        }
+        if (onNewLabel != null) {
+            MenuOption(label = stringResource(R.string.composer_new_label), selected = false) {
+                expanded = false
+                onNewLabel()
+            }
+        }
+    }
+}
+
+@Composable
+private fun NewLabelDialog(
+    onCreate: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var name by rememberSaveable { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.label_dialog_title)) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                placeholder = { Text(stringResource(R.string.label_name_hint)) },
+                singleLine = true,
+                shape = MaterialTheme.shapes.extraLarge,
+            )
+        },
+        confirmButton = {
+            TextButton(
+                enabled = name.isNotBlank(),
+                onClick = {
+                    onCreate(name.trim())
+                    onDismiss()
+                },
+            ) { Text(stringResource(R.string.composer_ok)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.composer_cancel)) }
+        },
+    )
+}
+
+@Composable
 private fun SelectorButton(
-    icon: ImageVector,
+    icon: ImageVector?,
     label: String,
     active: Boolean,
     onClick: () -> Unit,
+    iconLabel: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -485,12 +595,21 @@ private fun SelectorButton(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = if (active) Coral else TextSecondary,
-            modifier = Modifier.size(16.dp),
-        )
+        if (icon != null) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (active) Coral else TextSecondary,
+                modifier = Modifier.size(16.dp),
+            )
+        } else if (iconLabel != null) {
+            Text(
+                text = iconLabel,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (active) Coral else TextSecondary,
+            )
+        }
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = label,

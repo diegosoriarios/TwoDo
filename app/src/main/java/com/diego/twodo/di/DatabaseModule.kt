@@ -3,6 +3,7 @@ package com.diego.twodo.di
 import android.content.Context
 import androidx.room.Room
 import com.diego.twodo.data.local.TwoDoDatabase
+import com.diego.twodo.data.local.dao.LabelDao
 import com.diego.twodo.data.local.dao.TaskDao
 import com.diego.twodo.data.repository.TaskRepositoryImpl
 import com.diego.twodo.domain.repository.TaskRepository
@@ -30,12 +31,18 @@ object DatabaseModule {
         ).addMigrations(
             TwoDoDatabase.MIGRATION_1_2,
             TwoDoDatabase.MIGRATION_2_3,
+            TwoDoDatabase.MIGRATION_3_4,
         ).build()
     }
 
     @Provides
     fun provideTaskDao(database: TwoDoDatabase): TaskDao {
         return database.taskDao()
+    }
+
+    @Provides
+    fun provideLabelDao(database: TwoDoDatabase): LabelDao {
+        return database.labelDao()
     }
 }
 
