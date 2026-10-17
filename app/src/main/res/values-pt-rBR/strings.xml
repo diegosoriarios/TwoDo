@@ -1,0 +1,90 @@
+<resources>
+    <string name="app_name">Two.do</string>
+
+    <string name="welcome_title">Two.do do seu jeito</string>
+    <string name="welcome_body">Planejar é o processo de pensar sobre as atividades necessárias para alcançar um objetivo desejado.</string>
+    <string name="welcome_start">Vamos começar</string>
+
+    <string name="setup_title">Configure a IA no dispositivo</string>
+    <string name="setup_description">O Two.do organiza cada tarefa em ⚡ 2 min, ⏱️ 30 min ou 🏗️ longo. Um modelo de IA rodando inteiramente no seu celular torna a organização mais inteligente — nada sai do seu aparelho.</string>
+    <string name="setup_download_hint">Download único por Wi-Fi. Depois, tudo funciona offline.</string>
+    <string name="setup_download">Baixar modelo (Wi-Fi)</string>
+    <string name="setup_resume">Retomar download</string>
+    <string name="setup_partial">Encontramos um download parcial. Continuar de onde parou?</string>
+    <string name="setup_pause">Pausar</string>
+    <string name="setup_cancel">Cancelar</string>
+    <string name="setup_skip">Pular por enquanto</string>
+    <string name="setup_ready">Modelo pronto 🎉 Suas tarefas ficaram mais inteligentes.</string>
+    <string name="setup_progress_format">Baixando… %1$d%%</string>
+    <string name="setup_waiting_network">Aguardando conexão de rede… o download começará automaticamente.</string>
+    <string name="setup_download_mobile">Usar dados móveis</string>
+    <string name="setup_low_ram">Este dispositivo tem pouca memória, então o Two.do classificará tarefas com regras instantâneas em vez do modelo de IA.</string>
+    <string name="setup_error_format">Falha no download: %1$s</string>
+    <string name="setup_retry">Tentar novamente</string>
+
+    <string name="task_list_title">Lista de tarefas</string>
+    <string name="add_label">Adicionar</string>
+    <string name="filter_all">Todas</string>
+    <string name="summary_task_count_format">%1$d tarefas</string>
+    <string name="card_two_min_label">2 minutos</string>
+    <string name="card_thirty_min_label">30 minutos</string>
+    <string name="card_long_label">Longas</string>
+    <string name="card_unclassified_label">Sem categoria</string>
+
+    <string name="banner_ai_off">A IA no dispositivo não está configurada — regras rápidas estão organizando suas tarefas.</string>
+    <string name="banner_set_up">Configurar</string>
+
+    <string name="task_add_hint">Nome da tarefa</string>
+    <string name="task_add_cd">Adicionar tarefa</string>
+    <string name="task_do_it_now">Fazer agora</string>
+    <string name="task_more_cd">Mais opções</string>
+    <string name="task_edit">Editar</string>
+    <string name="task_delete">Excluir</string>
+    <string name="delete_confirm_title">Excluir tarefa?</string>
+    <string name="delete_confirm_text">Esta ação não pode ser desfeita.</string>
+    <string name="delete_confirm_action">Excluir</string>
+
+    <string name="bucket_two_min">⚡ 2 min</string>
+    <string name="bucket_thirty_min">⏱️ 30 min</string>
+    <string name="bucket_long">🏗️ Longa</string>
+    <string name="bucket_unclassified">🤔 Sem categoria</string>
+
+    <string name="tasks_empty_title">Tudo em ordem!</string>
+    <string name="tasks_empty_subtitle">Adicione uma tarefa abaixo — o Two.do organiza para você.</string>
+
+    <string name="widget_description">Tarefas pendentes com itens de ⚡ 2 minutos primeiro — marque como concluídas direto no widget.</string>
+    <string name="widget_pending_count">%1$d pendentes</string>
+    <string name="widget_empty_title">Tudo em ordem 🎉</string>
+    <string name="widget_more_format">+%1$d mais</string>
+
+    <string name="tab_tasks">Tarefas</string>
+    <string name="tab_calendar">Calendário</string>
+    <string name="calendar_empty_title">Nada para este dia</string>
+    <string name="calendar_empty_subtitle">Escolha outra data ou adicione uma tarefa com prazo.</string>
+    <string name="calendar_completed_title">Concluídas</string>
+
+    <string name="composer_category">Categoria</string>
+    <string name="composer_auto">Auto</string>
+    <string name="composer_when">Quando</string>
+    <string name="composer_today">Hoje</string>
+    <string name="composer_tomorrow">Amanhã</string>
+    <string name="composer_next_week">Próxima semana</string>
+    <string name="composer_weekend">Fim de semana</string>
+    <string name="composer_pick_date">Escolher data</string>
+    <string name="composer_no_date">Sem data</string>
+    <string name="composer_label">Etiqueta</string>
+    <string name="composer_new_label">Nova etiqueta…</string>
+    <string name="label_dialog_title">Nova etiqueta</string>
+    <string name="label_name_hint">Nome</string>
+    <string name="composer_labels_more_format">%1$s +%2$d</string>
+    <string name="composer_remind_me">Lembrar-me</string>
+    <string name="composer_reminder_in_1h">Em 1 hora</string>
+    <string name="composer_reminder_tomorrow_9">Amanhã 9:00</string>
+    <string name="composer_reminder_custom">Personalizado…</string>
+    <string name="composer_turn_off">Desligar</string>
+    <string name="composer_ok">OK</string>
+    <string name="composer_cancel">Cancelar</string>
+
+    <string name="notification_channel_name">Lembretes de tarefas</string>
+    <string name="notification_channel_description">Notificações que lembram você sobre tarefas</string>
+</resources>
