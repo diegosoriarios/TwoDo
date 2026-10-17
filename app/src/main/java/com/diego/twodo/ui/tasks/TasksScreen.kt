@@ -1,9 +1,7 @@
 package com.diego.twodo.ui.tasks
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -13,13 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -77,42 +74,55 @@ fun TasksScreen(
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
     ) {
-        AppHeader()
-        if (modelStatus !is ModelStatus.Ready || !viewModel.canUseLlm) {
-            AiSetupBanner(onOpenModelSetup = onOpenModelSetup)
-        }
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            item(key = "summary") { SummaryGrid(tasks = tasks) }
-            item(key = "section") {
-                SectionHeader(
-                    title = stringResource(R.string.task_list_title),
-                    dateLabel = LocalDate.now().format(sectionDateFormatter),
-                )
+        Column(modifier = Modifier.fillMaxSize()) {
+            AppHeader()
+            if (modelStatus !is ModelStatus.Ready || !viewModel.canUseLlm) {
+                AiSetupBanner(onOpenModelSetup = onOpenModelSetup)
             }
-            if (tasks.isEmpty()) {
-                item(key = "empty") { EmptyState(modifier = Modifier.fillMaxWidth()) }
-            } else {
-                items(tasks.sortedForDisplay(), key = { it.id }) { task ->
-                    TaskRow(
-                        task = task,
-                        onToggle = viewModel::toggleTaskCompletion,
-                        onRelabel = { taskToRelabelId = it.id },
-                        onDelete = viewModel::deleteTask,
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 96.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                item(key = "summary") { SummaryGrid(tasks = tasks) }
+                item(key = "section") {
+                    SectionHeader(
+                        title = stringResource(R.string.task_list_title),
+                        dateLabel = LocalDate.now().format(sectionDateFormatter),
                     )
                 }
+                if (tasks.isEmpty()) {
+                    item(key = "empty") { EmptyState(modifier = Modifier.fillMaxWidth()) }
+                } else {
+                    items(tasks.sortedForDisplay(), key = { it.id }) { task ->
+                        TaskRow(
+                            task = task,
+                            onToggle = viewModel::toggleTaskCompletion,
+                            onRelabel = { taskToRelabelId = it.id },
+                            onDelete = viewModel::deleteTask,
+                        )
+                    }
+                }
             }
-            item(key = "add") {
-                AddControl(onClick = { showComposer = true })
-            }
+        }
+        FloatingActionButton(
+            onClick = { showComposer = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp),
+            shape = RoundedCornerShape(4.dp),
+            containerColor = Coral,
+            contentColor = TextPrimary,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = stringResource(R.string.task_add_cd),
+            )
         }
     }
 
@@ -198,36 +208,6 @@ private fun AiSetupBanner(onOpenModelSetup: () -> Unit) {
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun AddControl(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(40.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .border(1.dp, TextSecondary.copy(alpha = 0.4f), RoundedCornerShape(4.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = Icons.Filled.Add,
-            contentDescription = null,
-            tint = TextPrimary,
-            modifier = Modifier.size(16.dp),
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = stringResource(R.string.add_label),
-            style = MaterialTheme.typography.bodyLarge,
-            color = TextPrimary,
-        )
     }
 }
 
