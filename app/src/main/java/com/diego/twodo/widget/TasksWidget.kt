@@ -47,7 +47,6 @@ private val WidgetTextSecondary = ColorProvider(Color(0xFFA0A0A0))
 private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
 
 private data class WidgetStrings(
-    val appName: String,
     val pendingCount: String,
     val emptyTitle: String,
     val addTaskCd: String,
@@ -63,7 +62,6 @@ class TasksWidget : GlanceAppWidget() {
             compareBy({ bucketOrder(it.bucket) }, { it.createdAt }),
         )
         val strings = WidgetStrings(
-            appName = context.getString(R.string.app_name),
             pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
             emptyTitle = context.getString(R.string.widget_empty_title),
             addTaskCd = context.getString(R.string.task_add_cd),
@@ -113,13 +111,10 @@ class TasksWidget : GlanceAppWidget() {
                 .padding(bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = strings.appName,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = WidgetTextPrimary,
-                ),
+            Image(
+                provider = ImageProvider(R.drawable.ic_logo),
+                contentDescription = null,
+                modifier = GlanceModifier.size(24.dp),
             )
             Text(
                 text = strings.pendingCount,
@@ -132,14 +127,14 @@ class TasksWidget : GlanceAppWidget() {
             )
             Box(
                 modifier = GlanceModifier
-                    .size(28.dp)
+                    .size(36.dp)
                     .clickable(actionStartActivity<QuickAddActivity>()),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     provider = ImageProvider(R.drawable.ic_add),
                     contentDescription = strings.addTaskCd,
-                    modifier = GlanceModifier.size(20.dp),
+                    modifier = GlanceModifier.size(24.dp),
                     colorFilter = ColorFilter.tint(WidgetCoral),
                 )
             }
