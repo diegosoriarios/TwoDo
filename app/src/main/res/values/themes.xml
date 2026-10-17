@@ -3,6 +3,12 @@
 
     <style name="Theme.TwoDo" parent="android:Theme.Material.Light.NoActionBar" />
 
+    <style name="Theme.TwoDo.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/launcher_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.TwoDo</item>
+    </style>
+
     <style name="Theme.TwoDo.QuickAdd" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
