@@ -1,5 +1,7 @@
 package com.diego.twodo.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -20,14 +22,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.diego.twodo.R
@@ -36,11 +41,13 @@ import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
 import com.diego.twodo.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private val dueDateFormatter = DateTimeFormatter.ofPattern("MMM d")
+private const val COMPLETION_ANIM_MILLIS = 350
 
 fun List<Task>.sortedForDisplay(): List<Task> =
     sortedWith(compareBy({ bucketOrder(it.bucket) }, { it.createdAt }))
@@ -61,26 +68,48 @@ fun TaskRow(
     modifier: Modifier = Modifier,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var completing by remember { mutableStateOf(false) }
+    val rowAlpha by animateFloatAsState(
+        targetValue = if (completing) 0f else 1f,
+        animationSpec = tween(durationMillis = COMPLETION_ANIM_MILLIS),
+        label = "task_row_alpha",
+    )
+
+    LaunchedEffect(completing) {
+        if (completing) {
+            delay(COMPLETION_ANIM_MILLIS.toLong())
+            onToggle(task.id, true)
+        }
+    }
 
     Row(
         modifier = modifier
+            .alpha(rowAlpha)
             .fillMaxWidth()
-            .heightIn(min = 40.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(SurfaceDark)
-            .clickable { onEdit(task) }
+            .clickable(enabled = !completing) { onEdit(task) }
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         SquareCheckbox(
-            checked = task.isCompleted,
-            onCheckedChange = { onToggle(task.id, it) },
+            checked = task.isCompleted || completing,
+            onCheckedChange = {
+                if (completing) return@SquareCheckbox
+                if (task.isCompleted) {
+                    onToggle(task.id, false)
+                } else {
+                    completing = true
+                }
+            },
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = task.title,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = if (task.isCompleted) TextSecondary else MaterialTheme.colorScheme.onSurface,
+            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
@@ -97,7 +126,11 @@ fun TaskRow(
             Spacer(modifier = Modifier.width(8.dp))
         }
         Box {
-            IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(28.dp)) {
+            IconButton(
+                onClick = { menuExpanded = true },
+                enabled = !completing,
+                modifier = Modifier.size(28.dp),
+            ) {
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = stringResource(R.string.task_more_cd),
