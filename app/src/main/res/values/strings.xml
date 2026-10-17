@@ -72,10 +72,12 @@
     <string name="composer_next_week">Next week</string>
     <string name="composer_weekend">Weekend</string>
     <string name="composer_pick_date">Pick date</string>
+    <string name="composer_no_date">No date</string>
     <string name="composer_remind_me">Remind me</string>
     <string name="composer_reminder_in_1h">In 1 hour</string>
     <string name="composer_reminder_tomorrow_9">Tomorrow 9:00</string>
     <string name="composer_reminder_custom">Custom…</string>
+    <string name="composer_turn_off">Turn off</string>
     <string name="composer_ok">OK</string>
     <string name="composer_cancel">Cancel</string>
 

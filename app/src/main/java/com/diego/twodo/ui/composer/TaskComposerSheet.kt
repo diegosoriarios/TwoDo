@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,17 +15,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -44,15 +52,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.TaskBucket
@@ -86,8 +94,8 @@ fun TaskComposerSheet(
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var pendingReminderEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
 
-    val keyboard = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
+    val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
 
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -95,10 +103,8 @@ fun TaskComposerSheet(
     ) { }
     val ensureNotificationPermission: () -> Unit = {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS,
-            ) != PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
         ) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
@@ -160,134 +166,31 @@ fun TaskComposerSheet(
                 }
             }
 
-            Text(
-                text = stringResource(R.string.composer_category),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
             Row(
                 modifier = Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ComposerChip(
-                    label = stringResource(R.string.composer_auto),
-                    selected = bucketChoice == BucketChoice.AUTO,
-                    onClick = { bucketChoice = BucketChoice.AUTO },
+                CategorySelector(
+                    bucketChoice = bucketChoice,
+                    onSelect = { bucketChoice = it },
                 )
-                ComposerChip(
-                    label = stringResource(R.string.bucket_two_min),
-                    selected = bucketChoice == BucketChoice.TWO_MIN,
-                    onClick = { bucketChoice = BucketChoice.TWO_MIN },
+                WhenSelector(
+                    dueEpochDay = dueEpochDay,
+                    onPick = { dueEpochDay = it },
+                    onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
+                    onClear = { dueEpochDay = -1L },
                 )
-                ComposerChip(
-                    label = stringResource(R.string.bucket_thirty_min),
-                    selected = bucketChoice == BucketChoice.THIRTY_MIN,
-                    onClick = { bucketChoice = BucketChoice.THIRTY_MIN },
-                )
-                ComposerChip(
-                    label = stringResource(R.string.bucket_long),
-                    selected = bucketChoice == BucketChoice.LONG,
-                    onClick = { bucketChoice = BucketChoice.LONG },
-                )
-            }
-
-            Text(
-                text = stringResource(R.string.composer_when),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-                fontSize = 11.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val today = remember { LocalDate.now() }
-                val customDateLabel = if (dueEpochDay != -1L) {
-                    TaskComposerDefaults.formatDueDate(dueEpochDay)
-                } else {
-                    stringResource(R.string.composer_pick_date)
-                }
-                val customSelected = dueEpochDay != -1L && dueEpochDay !in listOf(
-                    today.toEpochDay(),
-                    today.plusDays(1).toEpochDay(),
-                    today.plusDays(7).toEpochDay(),
-                    TaskComposerDefaults.nextWeekendEpochDay(),
-                )
-                ComposerChip(
-                    label = stringResource(R.string.composer_today),
-                    selected = dueEpochDay == today.toEpochDay(),
-                    onClick = { dueEpochDay = today.toEpochDay() },
-                )
-                ComposerChip(
-                    label = stringResource(R.string.composer_tomorrow),
-                    selected = dueEpochDay == today.plusDays(1).toEpochDay(),
-                    onClick = { dueEpochDay = today.plusDays(1).toEpochDay() },
-                )
-                ComposerChip(
-                    label = stringResource(R.string.composer_next_week),
-                    selected = dueEpochDay == today.plusDays(7).toEpochDay(),
-                    onClick = { dueEpochDay = today.plusDays(7).toEpochDay() },
-                )
-                ComposerChip(
-                    label = stringResource(R.string.composer_weekend),
-                    selected = dueEpochDay == TaskComposerDefaults.nextWeekendEpochDay(),
-                    onClick = { dueEpochDay = TaskComposerDefaults.nextWeekendEpochDay() },
-                )
-                ComposerChip(
-                    label = customDateLabel,
-                    selected = customSelected,
-                    onClick = { pickerTarget = PickerTarget.DUE_DATE },
-                )
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ComposerChip(
-                    label = stringResource(R.string.composer_remind_me),
-                    selected = reminderAt != -1L,
-                    onClick = {
-                        if (reminderAt != -1L) {
-                            reminderAt = -1L
-                        } else {
-                            reminderAt = tomorrow9Millis
-                            ensureNotificationPermission()
-                        }
+                RemindSelector(
+                    reminderAt = reminderAt,
+                    inOneHourMillis = inOneHourMillis,
+                    tomorrow9Millis = tomorrow9Millis,
+                    onSelect = {
+                        reminderAt = it
+                        ensureNotificationPermission()
                     },
+                    onCustom = { pickerTarget = PickerTarget.REMINDER },
+                    onTurnOff = { reminderAt = -1L },
                 )
-                if (reminderAt != -1L) {
-                    Text(
-                        text = TaskComposerDefaults.formatReminder(reminderAt),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Coral,
-                    )
-                }
-            }
-            if (reminderAt != -1L) {
-                Row(
-                    modifier = Modifier.horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    ComposerChip(
-                        label = stringResource(R.string.composer_reminder_in_1h),
-                        selected = reminderAt == inOneHourMillis,
-                        onClick = { reminderAt = inOneHourMillis },
-                    )
-                    ComposerChip(
-                        label = stringResource(R.string.composer_reminder_tomorrow_9),
-                        selected = reminderAt == tomorrow9Millis,
-                        onClick = { reminderAt = tomorrow9Millis },
-                    )
-                    ComposerChip(
-                        label = stringResource(R.string.composer_reminder_custom),
-                        selected = reminderAt != inOneHourMillis && reminderAt != tomorrow9Millis,
-                        onClick = { pickerTarget = PickerTarget.REMINDER },
-                    )
-                }
             }
         }
     }
@@ -383,21 +286,227 @@ fun TaskComposerSheet(
 }
 
 @Composable
-private fun ComposerChip(
+private fun CategorySelector(
+    bucketChoice: BucketChoice,
+    onSelect: (BucketChoice) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = when (bucketChoice) {
+        BucketChoice.AUTO -> stringResource(R.string.composer_auto)
+        BucketChoice.TWO_MIN -> stringResource(R.string.bucket_two_min)
+        BucketChoice.THIRTY_MIN -> stringResource(R.string.bucket_thirty_min)
+        BucketChoice.LONG -> stringResource(R.string.bucket_long)
+    }
+    SelectorButton(
+        icon = Icons.Filled.List,
+        label = label,
+        active = bucketChoice != BucketChoice.AUTO,
+        onClick = { expanded = true },
+    )
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        MenuOption(
+            label = stringResource(R.string.composer_auto),
+            selected = bucketChoice == BucketChoice.AUTO,
+        ) {
+            onSelect(BucketChoice.AUTO)
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.bucket_two_min),
+            selected = bucketChoice == BucketChoice.TWO_MIN,
+        ) {
+            onSelect(BucketChoice.TWO_MIN)
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.bucket_thirty_min),
+            selected = bucketChoice == BucketChoice.THIRTY_MIN,
+        ) {
+            onSelect(BucketChoice.THIRTY_MIN)
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.bucket_long),
+            selected = bucketChoice == BucketChoice.LONG,
+        ) {
+            onSelect(BucketChoice.LONG)
+            expanded = false
+        }
+    }
+}
+
+@Composable
+private fun WhenSelector(
+    dueEpochDay: Long,
+    onPick: (Long) -> Unit,
+    onPickDate: () -> Unit,
+    onClear: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val today = remember { LocalDate.now() }
+    val quickPicks = remember(today) {
+        listOf(
+            today.toEpochDay(),
+            today.plusDays(1).toEpochDay(),
+            today.plusDays(7).toEpochDay(),
+            TaskComposerDefaults.nextWeekendEpochDay(),
+        )
+    }
+    val label = when (dueEpochDay) {
+        -1L -> stringResource(R.string.composer_when)
+        quickPicks[0] -> stringResource(R.string.composer_today)
+        quickPicks[1] -> stringResource(R.string.composer_tomorrow)
+        quickPicks[2] -> stringResource(R.string.composer_next_week)
+        quickPicks[3] -> stringResource(R.string.composer_weekend)
+        else -> TaskComposerDefaults.formatDueDate(dueEpochDay)
+    }
+    SelectorButton(
+        icon = Icons.Outlined.DateRange,
+        label = label,
+        active = dueEpochDay != -1L,
+        onClick = { expanded = true },
+    )
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        MenuOption(
+            label = stringResource(R.string.composer_today),
+            selected = dueEpochDay == quickPicks[0],
+        ) {
+            onPick(quickPicks[0])
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.composer_tomorrow),
+            selected = dueEpochDay == quickPicks[1],
+        ) {
+            onPick(quickPicks[1])
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.composer_next_week),
+            selected = dueEpochDay == quickPicks[2],
+        ) {
+            onPick(quickPicks[2])
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.composer_weekend),
+            selected = dueEpochDay == quickPicks[3],
+        ) {
+            onPick(quickPicks[3])
+            expanded = false
+        }
+        MenuOption(label = stringResource(R.string.composer_pick_date), selected = false) {
+            expanded = false
+            onPickDate()
+        }
+        if (dueEpochDay != -1L) {
+            MenuOption(label = stringResource(R.string.composer_no_date), selected = false) {
+                onClear()
+                expanded = false
+            }
+        }
+    }
+}
+
+@Composable
+private fun RemindSelector(
+    reminderAt: Long,
+    inOneHourMillis: Long,
+    tomorrow9Millis: Long,
+    onSelect: (Long) -> Unit,
+    onCustom: () -> Unit,
+    onTurnOff: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val label = if (reminderAt == -1L) {
+        stringResource(R.string.composer_remind_me)
+    } else {
+        TaskComposerDefaults.formatReminder(reminderAt)
+    }
+    SelectorButton(
+        icon = Icons.Filled.Notifications,
+        label = label,
+        active = reminderAt != -1L,
+        onClick = { expanded = true },
+    )
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        MenuOption(
+            label = stringResource(R.string.composer_reminder_in_1h),
+            selected = reminderAt == inOneHourMillis,
+        ) {
+            onSelect(inOneHourMillis)
+            expanded = false
+        }
+        MenuOption(
+            label = stringResource(R.string.composer_reminder_tomorrow_9),
+            selected = reminderAt == tomorrow9Millis,
+        ) {
+            onSelect(tomorrow9Millis)
+            expanded = false
+        }
+        MenuOption(label = stringResource(R.string.composer_reminder_custom), selected = false) {
+            expanded = false
+            onCustom()
+        }
+        if (reminderAt != -1L) {
+            MenuOption(label = stringResource(R.string.composer_turn_off), selected = false) {
+                onTurnOff()
+                expanded = false
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectorButton(
+    icon: ImageVector,
+    label: String,
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(SurfaceDark)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (active) Coral else TextSecondary,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = if (active) Coral else TextSecondary,
+        )
+    }
+}
+
+@Composable
+private fun MenuOption(
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    FilterChip(
-        selected = selected,
+    DropdownMenuItem(
+        text = { Text(label) },
+        trailingIcon = if (selected) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = Coral,
+                )
+            }
+        } else {
+            null
+        },
         onClick = onClick,
-        label = { Text(label) },
-        colors = FilterChipDefaults.filterChipColors(
-            containerColor = SurfaceDark,
-            labelColor = TextSecondary,
-            selectedContainerColor = Coral,
-            selectedLabelColor = TextPrimary,
-        ),
     )
 }
 
