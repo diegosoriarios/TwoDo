@@ -30,15 +30,15 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
-import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
-import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.ui.quickadd.QuickAddActivity
 import kotlinx.coroutines.flow.first
+import java.time.LocalDate
+import java.time.ZoneId
 
 private val WidgetBackground = ColorProvider(Color(0xFF121212))
 private val WidgetSurface = ColorProvider(Color(0xFF252525))
@@ -50,7 +50,7 @@ private val WidgetWhite = ColorProvider(Color(0xFFFFFFFF))
 
 private data class WidgetStrings(
     val appName: String,
-    val pendingCount: String,
+    val today: String,
     val emptyTitle: String,
     val addTaskCd: String,
     val more: String?,
@@ -61,13 +61,17 @@ class TasksWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
         val tasks = taskRepository.getActiveTasks().first()
-        val sorted = tasks.sortedWith(
-            compareBy({ bucketOrder(it.bucket) }, { it.createdAt }),
-        )
+        val zone = ZoneId.systemDefault()
+        val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val tomorrowStart = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val dueToday = tasks
+            .filter { it.dueDate != null && it.dueDate < tomorrowStart }
+            .sortedWith(compareBy({ it.dueDate }, { it.createdAt }))
+        val sorted = dueToday
         val strings = WidgetStrings(
             appName = context.getString(R.string.app_name),
-            pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
-            emptyTitle = context.getString(R.string.widget_empty_title),
+            today = context.getString(R.string.widget_today),
+            emptyTitle = context.getString(R.string.widget_today_empty_title),
             addTaskCd = context.getString(R.string.task_add_cd),
             more = if (sorted.size > MAX_TASK_ROWS) {
                 context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
@@ -86,36 +90,44 @@ class TasksWidget : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(WidgetBackground)
-                .padding(12.dp),
+                .cornerRadius(16.dp),
         ) {
-            WidgetHeader(tasks.size, strings)
-            if (tasks.isEmpty()) {
-                EmptyState(strings.emptyTitle)
-            } else {
-                tasks.take(MAX_TASK_ROWS).forEach { task ->
-                    TaskRow(task)
-                    Spacer(modifier = GlanceModifier.height(6.dp))
-                }
-                strings.more?.let { extraText ->
-                    Text(
-                        text = extraText,
-                        style = TextStyle(fontSize = 12.sp, color = WidgetTextSecondary),
-                        modifier = GlanceModifier.padding(vertical = 2.dp),
-                    )
+            WidgetHeader(strings)
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxWidth()
+                    .defaultWeight()
+                    .padding(12.dp),
+            ) {
+                if (tasks.isEmpty()) {
+                    EmptyState(strings.emptyTitle)
+                } else {
+                    Column {
+                        tasks.take(MAX_TASK_ROWS).forEach { task ->
+                            TaskRow(task)
+                            Spacer(modifier = GlanceModifier.height(6.dp))
+                        }
+                        strings.more?.let { extraText ->
+                            Text(
+                                text = extraText,
+                                style = TextStyle(fontSize = 12.sp, color = WidgetTextSecondary),
+                                modifier = GlanceModifier.padding(vertical = 2.dp),
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
     @Composable
-    private fun WidgetHeader(pendingCount: Int, strings: WidgetStrings) {
+    private fun WidgetHeader(strings: WidgetStrings) {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp)
-                .cornerRadius(4.dp)
+                .height(40.dp)
                 .background(WidgetHeaderBar)
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
@@ -133,15 +145,16 @@ class TasksWidget : GlanceAppWidget() {
                 ),
                 maxLines = 1,
             )
+            Spacer(modifier = GlanceModifier.defaultWeight())
             Text(
-                text = strings.pendingCount,
+                text = strings.today,
                 style = TextStyle(
                     fontSize = 12.sp,
                     color = WidgetTextSecondary,
-                    textAlign = TextAlign.End,
                 ),
-                modifier = GlanceModifier.defaultWeight(),
+                maxLines = 1,
             )
+            Spacer(modifier = GlanceModifier.width(8.dp))
             Box(
                 modifier = GlanceModifier
                     .size(28.dp)
@@ -205,13 +218,6 @@ class TasksWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.defaultWeight(),
             )
         }
-    }
-
-    private fun bucketOrder(bucket: TaskBucket): Int = when (bucket) {
-        TaskBucket.TWO_MIN -> 0
-        TaskBucket.THIRTY_MIN -> 1
-        TaskBucket.LONG -> 2
-        TaskBucket.UNCLASSIFIED -> 3
     }
 
     private companion object {

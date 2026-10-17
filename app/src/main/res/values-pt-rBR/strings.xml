@@ -52,9 +52,9 @@
     <string name="tasks_empty_title">Tudo em ordem!</string>
     <string name="tasks_empty_subtitle">Adicione uma tarefa abaixo — o Two.do organiza para você.</string>
 
-    <string name="widget_description">Tarefas pendentes com itens de ⚡ 2 minutos primeiro — marque como concluídas direto no widget.</string>
-    <string name="widget_pending_count">%1$d pendentes</string>
-    <string name="widget_empty_title">Tudo em ordem 🎉</string>
+    <string name="widget_description">Tarefas para hoje com itens de ⚡ 2 minutos primeiro — marque como concluídas direto no widget.</string>
+    <string name="widget_today">Hoje</string>
+    <string name="widget_today_empty_title">Nada para hoje 🎉</string>
     <string name="widget_more_format">+%1$d mais</string>
 
     <string name="tab_tasks">Tarefas</string>
