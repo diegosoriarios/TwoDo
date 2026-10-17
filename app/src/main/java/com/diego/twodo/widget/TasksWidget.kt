@@ -42,11 +42,14 @@ import kotlinx.coroutines.flow.first
 
 private val WidgetBackground = ColorProvider(Color(0xFF121212))
 private val WidgetSurface = ColorProvider(Color(0xFF252525))
+private val WidgetHeaderBar = ColorProvider(Color(0xFF2E2E2E))
 private val WidgetTextPrimary = ColorProvider(Color(0xFFFFFFFF))
 private val WidgetTextSecondary = ColorProvider(Color(0xFFA0A0A0))
 private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
+private val WidgetWhite = ColorProvider(Color(0xFFFFFFFF))
 
 private data class WidgetStrings(
+    val appName: String,
     val pendingCount: String,
     val emptyTitle: String,
     val addTaskCd: String,
@@ -62,6 +65,7 @@ class TasksWidget : GlanceAppWidget() {
             compareBy({ bucketOrder(it.bucket) }, { it.createdAt }),
         )
         val strings = WidgetStrings(
+            appName = context.getString(R.string.app_name),
             pendingCount = context.getString(R.string.widget_pending_count, tasks.size),
             emptyTitle = context.getString(R.string.widget_empty_title),
             addTaskCd = context.getString(R.string.task_add_cd),
@@ -108,13 +112,26 @@ class TasksWidget : GlanceAppWidget() {
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .padding(bottom = 8.dp),
+                .padding(bottom = 8.dp)
+                .cornerRadius(4.dp)
+                .background(WidgetHeaderBar)
+                .padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_logo),
                 contentDescription = null,
-                modifier = GlanceModifier.size(24.dp),
+                modifier = GlanceModifier.size(20.dp),
+            )
+            Spacer(modifier = GlanceModifier.width(6.dp))
+            Text(
+                text = strings.appName,
+                style = TextStyle(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = WidgetTextPrimary,
+                ),
+                maxLines = 1,
             )
             Text(
                 text = strings.pendingCount,
@@ -127,15 +144,17 @@ class TasksWidget : GlanceAppWidget() {
             )
             Box(
                 modifier = GlanceModifier
-                    .size(36.dp)
+                    .size(28.dp)
+                    .cornerRadius(4.dp)
+                    .background(WidgetCoral)
                     .clickable(actionStartActivity<QuickAddActivity>()),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     provider = ImageProvider(R.drawable.ic_add),
                     contentDescription = strings.addTaskCd,
-                    modifier = GlanceModifier.size(24.dp),
-                    colorFilter = ColorFilter.tint(WidgetCoral),
+                    modifier = GlanceModifier.size(18.dp),
+                    colorFilter = ColorFilter.tint(WidgetWhite),
                 )
             }
         }
