@@ -25,6 +25,8 @@ class ClassificationRepositoryImpl @Inject constructor(
     override suspend fun captureTask(
         title: String,
         userSelectedBucket: TaskBucket?,
+        dueDate: Long?,
+        reminderAt: Long?,
     ): Task = withContext(bgDispatcher) {
         val trimmedTitle = title.trim()
 
@@ -33,6 +35,8 @@ class ClassificationRepositoryImpl @Inject constructor(
                 title = trimmedTitle,
                 bucket = userSelectedBucket,
                 source = BucketSource.USER,
+                dueDate = dueDate,
+                reminderAt = reminderAt,
             )
             return@withContext taskRepository.getTaskByIdSync(id)
                 ?: Task(id = id, title = trimmedTitle, bucket = userSelectedBucket, bucketSource = BucketSource.USER)
@@ -44,6 +48,8 @@ class ClassificationRepositoryImpl @Inject constructor(
             title = trimmedTitle,
             bucket = heuristicResult.category,
             source = BucketSource.HEURISTIC,
+            dueDate = dueDate,
+            reminderAt = reminderAt,
         )
 
         val task = taskRepository.getTaskByIdSync(taskId)

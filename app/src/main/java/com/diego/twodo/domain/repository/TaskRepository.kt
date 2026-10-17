@@ -13,7 +13,13 @@ interface TaskRepository {
     suspend fun getUnclassifiedTasksSync(): List<Task>
     fun getTaskById(id: Long): Flow<Task?>
     suspend fun getTaskByIdSync(id: Long): Task?
-    suspend fun addTask(title: String, bucket: TaskBucket = TaskBucket.UNCLASSIFIED, source: BucketSource = BucketSource.HEURISTIC): Long
+    suspend fun addTask(
+        title: String,
+        bucket: TaskBucket = TaskBucket.UNCLASSIFIED,
+        source: BucketSource = BucketSource.HEURISTIC,
+        dueDate: Long? = null,
+        reminderAt: Long? = null,
+    ): Long
     suspend fun updateTask(task: Task)
     suspend fun toggleTaskCompletion(id: Long, isCompleted: Boolean)
     suspend fun updateTaskBucket(id: Long, bucket: TaskBucket, source: BucketSource)

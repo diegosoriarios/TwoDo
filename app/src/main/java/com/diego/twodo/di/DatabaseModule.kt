@@ -27,7 +27,7 @@ object DatabaseModule {
             context,
             TwoDoDatabase::class.java,
             "twodo_database",
-        ).fallbackToDestructiveMigration(dropAllTables = true).build()
+        ).addMigrations(TwoDoDatabase.MIGRATION_1_2).build()
     }
 
     @Provides

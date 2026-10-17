@@ -33,8 +33,14 @@ import androidx.compose.ui.unit.dp
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
+import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
 import com.diego.twodo.ui.theme.TextSecondary
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+private val dueDateFormatter = DateTimeFormatter.ofPattern("MMM d")
 
 fun List<Task>.sortedForDisplay(): List<Task> =
     sortedWith(compareBy({ bucketOrder(it.bucket) }, { it.createdAt }))
@@ -81,6 +87,15 @@ fun TaskRow(
                 .weight(1f)
                 .padding(vertical = 10.dp),
         )
+        if (task.dueDate != null) {
+            Text(
+                text = Instant.ofEpochMilli(task.dueDate).atZone(ZoneId.systemDefault())
+                    .format(dueDateFormatter),
+                style = MaterialTheme.typography.bodySmall,
+                color = Coral,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         Box {
             IconButton(onClick = { menuExpanded = true }, modifier = Modifier.size(28.dp)) {
                 Icon(

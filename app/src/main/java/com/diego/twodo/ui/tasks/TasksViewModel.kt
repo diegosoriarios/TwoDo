@@ -44,10 +44,15 @@ class TasksViewModel @Inject constructor(
         }
     }
 
-    fun addTask(title: String) {
+    fun addTask(
+        title: String,
+        bucket: TaskBucket? = null,
+        dueDate: Long? = null,
+        reminderAt: Long? = null,
+    ) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            classificationRepository.captureTask(title.trim())
+            classificationRepository.captureTask(title.trim(), bucket, dueDate, reminderAt)
             TasksWidget().updateAll(context)
         }
     }

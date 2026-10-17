@@ -24,7 +24,6 @@
 
     <string name="task_list_title">Task list</string>
     <string name="add_label">Add</string>
-    <string name="calendar_cd">Calendar</string>
     <string name="summary_task_count_format">%1$d tasks</string>
     <string name="card_two_min_label">2 minutes</string>
     <string name="card_thirty_min_label">30 minutes</string>
@@ -59,4 +58,27 @@
     <string name="widget_pending_count">%1$d pending</string>
     <string name="widget_empty_title">All clear 🎉</string>
     <string name="widget_more_format">+%1$d more</string>
+
+    <string name="tab_tasks">Tasks</string>
+    <string name="tab_calendar">Calendar</string>
+    <string name="calendar_empty_title">Nothing due this day</string>
+    <string name="calendar_empty_subtitle">Pick another date, or add a task with a due date.</string>
+
+    <string name="composer_category">Category</string>
+    <string name="composer_auto">Auto</string>
+    <string name="composer_when">When</string>
+    <string name="composer_today">Today</string>
+    <string name="composer_tomorrow">Tomorrow</string>
+    <string name="composer_next_week">Next week</string>
+    <string name="composer_weekend">Weekend</string>
+    <string name="composer_pick_date">Pick date</string>
+    <string name="composer_remind_me">Remind me</string>
+    <string name="composer_reminder_in_1h">In 1 hour</string>
+    <string name="composer_reminder_tomorrow_9">Tomorrow 9:00</string>
+    <string name="composer_reminder_custom">Custom…</string>
+    <string name="composer_ok">OK</string>
+    <string name="composer_cancel">Cancel</string>
+
+    <string name="notification_channel_name">Task reminders</string>
+    <string name="notification_channel_description">Notifications that remind you about tasks</string>
 </resources>

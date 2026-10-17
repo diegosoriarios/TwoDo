@@ -6,6 +6,7 @@ import com.diego.twodo.domain.model.BucketSource
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.domain.repository.TaskRepository
+import com.diego.twodo.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -13,7 +14,8 @@ import javax.inject.Singleton
 
 @Singleton
 class TaskRepositoryImpl @Inject constructor(
-    private val taskDao: TaskDao
+    private val taskDao: TaskDao,
+    private val reminderScheduler: ReminderScheduler,
 ) : TaskRepository {
 
     override fun getActiveTasks(): Flow<List<Task>> {
@@ -47,17 +49,26 @@ class TaskRepositoryImpl @Inject constructor(
     override suspend fun addTask(
         title: String,
         bucket: TaskBucket,
-        source: BucketSource
+        source: BucketSource,
+        dueDate: Long?,
+        reminderAt: Long?,
     ): Long {
+        val now = System.currentTimeMillis()
         val entity = TaskEntity(
             title = title,
             bucket = bucket,
             bucketSource = source,
             isCompleted = false,
-            createdAt = System.currentTimeMillis(),
-            updatedAt = System.currentTimeMillis()
+            dueDate = dueDate,
+            reminderAt = reminderAt,
+            createdAt = now,
+            updatedAt = now
         )
-        return taskDao.insertTask(entity)
+        val id = taskDao.insertTask(entity)
+        if (reminderAt != null) {
+            reminderScheduler.schedule(id, title, reminderAt)
+        }
+        return id
     }
 
     override suspend fun updateTask(task: Task) {
@@ -66,6 +77,9 @@ class TaskRepositoryImpl @Inject constructor(
 
     override suspend fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
         taskDao.updateTaskCompletion(id, isCompleted, System.currentTimeMillis())
+        if (isCompleted) {
+            reminderScheduler.cancel(id)
+        }
     }
 
     override suspend fun updateTaskBucket(
@@ -77,10 +91,12 @@ class TaskRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteTask(task: Task) {
+        reminderScheduler.cancel(task.id)
         taskDao.deleteTask(task.toEntity())
     }
 
     override suspend fun deleteTaskById(id: Long) {
+        reminderScheduler.cancel(id)
         taskDao.deleteTaskById(id)
     }
 
@@ -90,6 +106,8 @@ class TaskRepositoryImpl @Inject constructor(
         bucket = bucket,
         bucketSource = bucketSource,
         isCompleted = isCompleted,
+        dueDate = dueDate,
+        reminderAt = reminderAt,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
@@ -100,6 +118,8 @@ class TaskRepositoryImpl @Inject constructor(
         bucket = bucket,
         bucketSource = bucketSource,
         isCompleted = isCompleted,
+        dueDate = dueDate,
+        reminderAt = reminderAt,
         createdAt = createdAt,
         updatedAt = updatedAt
     )
