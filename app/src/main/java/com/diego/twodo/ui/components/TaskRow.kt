@@ -56,7 +56,7 @@ private fun bucketOrder(bucket: TaskBucket): Int = when (bucket) {
 fun TaskRow(
     task: Task,
     onToggle: (Long, Boolean) -> Unit,
-    onRelabel: (Task) -> Unit,
+    onEdit: (Task) -> Unit,
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -68,7 +68,7 @@ fun TaskRow(
             .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(SurfaceDark)
-            .clickable { onRelabel(task) }
+            .clickable { onEdit(task) }
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -110,10 +110,10 @@ fun TaskRow(
                 onDismissRequest = { menuExpanded = false },
             ) {
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.task_change_bucket)) },
+                    text = { Text(stringResource(R.string.task_edit)) },
                     onClick = {
                         menuExpanded = false
-                        onRelabel(task)
+                        onEdit(task)
                     },
                 )
                 DropdownMenuItem(

@@ -75,6 +75,34 @@ class TaskRepositoryImpl @Inject constructor(
         taskDao.updateTask(task.toEntity())
     }
 
+    override suspend fun updateTaskDetails(
+        id: Long,
+        title: String,
+        bucket: TaskBucket?,
+        dueDate: Long?,
+        reminderAt: Long?,
+    ) {
+        val current = taskDao.getTaskByIdSync(id) ?: return
+        val newBucket = bucket ?: current.bucket
+        val newSource =
+            if (bucket != null && bucket != current.bucket) BucketSource.USER else current.bucketSource
+        taskDao.updateTask(
+            current.copy(
+                title = title,
+                bucket = newBucket,
+                bucketSource = newSource,
+                dueDate = dueDate,
+                reminderAt = reminderAt,
+                updatedAt = System.currentTimeMillis(),
+            )
+        )
+        when {
+            reminderAt == null -> reminderScheduler.cancel(id)
+            reminderAt != current.reminderAt || title != current.title ->
+                reminderScheduler.schedule(id, title, reminderAt)
+        }
+    }
+
     override suspend fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
         taskDao.updateTaskCompletion(id, isCompleted, System.currentTimeMillis())
         if (isCompleted) {

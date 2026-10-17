@@ -34,7 +34,7 @@ import com.diego.twodo.ui.components.SectionHeader
 import com.diego.twodo.ui.components.TaskRow
 import com.diego.twodo.ui.components.sectionDateFormatter
 import com.diego.twodo.ui.components.sortedForDisplay
-import com.diego.twodo.ui.tasks.BucketOverrideSheet
+import com.diego.twodo.ui.composer.TaskComposerSheet
 import com.diego.twodo.ui.tasks.TasksViewModel
 import com.diego.twodo.ui.theme.TextSecondary
 import java.time.LocalDate
@@ -46,7 +46,7 @@ fun CalendarScreen(
 ) {
     val tasks by viewModel.tasks.collectAsState()
     var selectedEpochDay by rememberSaveable { mutableLongStateOf(LocalDate.now().toEpochDay()) }
-    var taskToRelabelId by remember { mutableStateOf<Long?>(null) }
+    var editingTaskId by remember { mutableStateOf<Long?>(null) }
     val selectedDate = LocalDate.ofEpochDay(selectedEpochDay)
     val tasksForDay = remember(tasks, selectedEpochDay) {
         tasks.filterDueOn(selectedDate)
@@ -80,7 +80,7 @@ fun CalendarScreen(
                     TaskRow(
                         task = task,
                         onToggle = viewModel::toggleTaskCompletion,
-                        onRelabel = { taskToRelabelId = it.id },
+                        onEdit = { editingTaskId = it.id },
                         onDelete = viewModel::deleteTask,
                     )
                 }
@@ -88,13 +88,17 @@ fun CalendarScreen(
         }
     }
 
-    taskToRelabelId?.let { taskId ->
-        BucketOverrideSheet(
-            onDismiss = { taskToRelabelId = null },
-            onSelect = { bucket ->
-                viewModel.overrideBucket(taskId, bucket)
-                taskToRelabelId = null
+    tasks.firstOrNull { it.id == editingTaskId }?.let { task ->
+        TaskComposerSheet(
+            onDismiss = { editingTaskId = null },
+            onSubmit = { title, bucket, dueDate, reminderAt ->
+                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt)
+                editingTaskId = null
             },
+            initialTitle = task.title,
+            initialBucket = task.bucket,
+            initialDueDate = task.dueDate,
+            initialReminderAt = task.reminderAt,
         )
     }
 }

@@ -21,6 +21,13 @@ interface TaskRepository {
         reminderAt: Long? = null,
     ): Long
     suspend fun updateTask(task: Task)
+    suspend fun updateTaskDetails(
+        id: Long,
+        title: String,
+        bucket: TaskBucket?,
+        dueDate: Long?,
+        reminderAt: Long?,
+    )
     suspend fun toggleTaskCompletion(id: Long, isCompleted: Boolean)
     suspend fun updateTaskBucket(id: Long, bucket: TaskBucket, source: BucketSource)
     suspend fun deleteTask(task: Task)

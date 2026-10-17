@@ -65,7 +65,7 @@ fun TasksScreen(
     val modelStatus by viewModel.modelStatus.collectAsState()
 
     var showComposer by rememberSaveable { mutableStateOf(false) }
-    var taskToRelabelId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var editingTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     LaunchedEffect(focusQuickAdd) {
         if (focusQuickAdd) {
@@ -103,7 +103,7 @@ fun TasksScreen(
                         TaskRow(
                             task = task,
                             onToggle = viewModel::toggleTaskCompletion,
-                            onRelabel = { taskToRelabelId = it.id },
+                            onEdit = { editingTaskId = it.id },
                             onDelete = viewModel::deleteTask,
                         )
                     }
@@ -136,13 +136,17 @@ fun TasksScreen(
         )
     }
 
-    taskToRelabelId?.let { taskId ->
-        BucketOverrideSheet(
-            onDismiss = { taskToRelabelId = null },
-            onSelect = { bucket ->
-                viewModel.overrideBucket(taskId, bucket)
-                taskToRelabelId = null
+    tasks.firstOrNull { it.id == editingTaskId }?.let { task ->
+        TaskComposerSheet(
+            onDismiss = { editingTaskId = null },
+            onSubmit = { title, bucket, dueDate, reminderAt ->
+                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt)
+                editingTaskId = null
             },
+            initialTitle = task.title,
+            initialBucket = task.bucket,
+            initialDueDate = task.dueDate,
+            initialReminderAt = task.reminderAt,
         )
     }
 }

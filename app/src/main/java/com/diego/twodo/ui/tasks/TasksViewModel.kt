@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.diego.twodo.domain.manager.ModelManager
-import com.diego.twodo.domain.model.BucketSource
 import com.diego.twodo.domain.model.ModelStatus
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
@@ -57,16 +56,23 @@ class TasksViewModel @Inject constructor(
         }
     }
 
-    fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
+    fun updateTask(
+        id: Long,
+        title: String,
+        bucket: TaskBucket?,
+        dueDate: Long?,
+        reminderAt: Long?,
+    ) {
+        if (title.isBlank()) return
         viewModelScope.launch {
-            taskRepository.toggleTaskCompletion(id, isCompleted)
+            taskRepository.updateTaskDetails(id, title.trim(), bucket, dueDate, reminderAt)
             TasksWidget().updateAll(context)
         }
     }
 
-    fun overrideBucket(id: Long, bucket: TaskBucket) {
+    fun toggleTaskCompletion(id: Long, isCompleted: Boolean) {
         viewModelScope.launch {
-            taskRepository.updateTaskBucket(id, bucket, BucketSource.USER)
+            taskRepository.toggleTaskCompletion(id, isCompleted)
             TasksWidget().updateAll(context)
         }
     }

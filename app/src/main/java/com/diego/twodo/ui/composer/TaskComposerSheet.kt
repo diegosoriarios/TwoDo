@@ -83,17 +83,25 @@ private enum class PickerTarget { DUE_DATE, REMINDER }
 /**
  * Shared "new task" bottom sheet used by both the in-app flow and the widget's
  * QuickAddActivity. Pure UI — persistence happens through [onSubmit] at the call site.
+ * Pass [initialTitle]/[initialBucket]/[initialDueDate]/[initialReminderAt] to edit
+ * an existing task; leave them empty for new-task mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskComposerSheet(
     onDismiss: () -> Unit,
     onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?) -> Unit,
+    initialTitle: String = "",
+    initialBucket: TaskBucket? = null,
+    initialDueDate: Long? = null,
+    initialReminderAt: Long? = null,
 ) {
-    var text by rememberSaveable { mutableStateOf("") }
-    var bucketChoice by rememberSaveable { mutableStateOf(BucketChoice.AUTO) }
-    var dueEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
-    var reminderAt by rememberSaveable { mutableLongStateOf(-1L) }
+    var text by rememberSaveable { mutableStateOf(initialTitle) }
+    var bucketChoice by rememberSaveable { mutableStateOf(initialBucket.toBucketChoice()) }
+    var dueEpochDay by rememberSaveable {
+        mutableLongStateOf(initialDueDate?.let { TaskComposerDefaults.millisToEpochDay(it) } ?: -1L)
+    }
+    var reminderAt by rememberSaveable { mutableLongStateOf(initialReminderAt ?: -1L) }
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var pendingReminderEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
 
@@ -522,6 +530,13 @@ private fun BucketChoice.toBucket(): TaskBucket? = when (this) {
     BucketChoice.TWO_MIN -> TaskBucket.TWO_MIN
     BucketChoice.THIRTY_MIN -> TaskBucket.THIRTY_MIN
     BucketChoice.LONG -> TaskBucket.LONG
+}
+
+private fun TaskBucket?.toBucketChoice(): BucketChoice = when (this) {
+    TaskBucket.TWO_MIN -> BucketChoice.TWO_MIN
+    TaskBucket.THIRTY_MIN -> BucketChoice.THIRTY_MIN
+    TaskBucket.LONG -> BucketChoice.LONG
+    else -> BucketChoice.AUTO
 }
 
 object TaskComposerDefaults {

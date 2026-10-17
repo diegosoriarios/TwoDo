@@ -37,19 +37,16 @@
     <string name="task_add_cd">Add task</string>
     <string name="task_do_it_now">Do it now</string>
     <string name="task_more_cd">More options</string>
-    <string name="task_change_bucket">Change bucket</string>
+    <string name="task_edit">Edit</string>
     <string name="task_delete">Delete</string>
+    <string name="delete_confirm_title">Delete task?</string>
+    <string name="delete_confirm_text">This action can\'t be undone.</string>
+    <string name="delete_confirm_action">Delete</string>
 
     <string name="bucket_two_min">⚡ 2 min</string>
     <string name="bucket_thirty_min">⏱️ 30 min</string>
     <string name="bucket_long">🏗️ Long</string>
     <string name="bucket_unclassified">🤔 Unclassified</string>
-    <string name="bucket_empty">Nothing here yet</string>
-
-    <string name="override_title">Move to bucket</string>
-    <string name="override_two_min_desc">Knock it out right now</string>
-    <string name="override_thirty_min_desc">One focused session</string>
-    <string name="override_long_desc">Needs planning or several steps</string>
 
     <string name="tasks_empty_title">All clear!</string>
     <string name="tasks_empty_subtitle">Capture a task below — Two.do will sort it for you.</string>
