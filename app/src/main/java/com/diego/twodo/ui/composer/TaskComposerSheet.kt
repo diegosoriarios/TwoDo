@@ -9,34 +9,37 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -61,18 +64,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.TaskBucket
+import com.diego.twodo.ui.theme.Charcoal
 import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
 import com.diego.twodo.ui.theme.TextPrimary
@@ -155,88 +162,135 @@ fun TaskComposerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        containerColor = Charcoal,
+        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+        dragHandle = {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(32.dp)
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(TextSecondary),
+                )
+            }
+        },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 24.dp)
                 .navigationBarsPadding()
                 .imePadding()
-                .padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            BasicTextField(
+                value = text,
+                onValueChange = { text = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 48.dp)
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .focusRequester(focusRequester),
+                textStyle = TextStyle(
+                    fontSize = 18.sp,
+                    lineHeight = 26.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary,
+                ),
+                cursorBrush = SolidColor(Coral),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { submit() }),
+                decorationBox = { innerTextField ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (text.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.task_add_hint),
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    lineHeight = 26.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = TextSecondary,
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
+            )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .focusRequester(focusRequester),
-                    placeholder = { Text(stringResource(R.string.task_add_hint)) },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.extraLarge,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { submit() }),
-                )
-                FilledIconButton(
-                    onClick = { submit() },
-                    enabled = text.isNotBlank(),
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = Coral,
-                        contentColor = TextPrimary,
-                    ),
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (text.isNotBlank()) Coral else SurfaceDark)
+                        .clickable(enabled = text.isNotBlank()) { submit() },
+                    contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Add,
                         contentDescription = stringResource(R.string.task_add_cd),
+                        tint = if (text.isNotBlank()) TextPrimary else TextSecondary,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
-            }
-
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                CategorySelector(
-                    bucketChoice = bucketChoice,
-                    onSelect = { bucketChoice = it },
-                )
-                WhenSelector(
-                    dueEpochDay = dueEpochDay,
-                    onPick = { dueEpochDay = it },
-                    onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
-                    onClear = { dueEpochDay = -1L },
-                )
-                LabelSelector(
-                    labels = labels,
-                    selectedLabelIds = selectedLabelIds,
-                    onToggle = { labelId ->
-                        selectedLabelIds = if (labelId in selectedLabelIds) {
-                            selectedLabelIds - labelId
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CategorySelector(
+                        bucketChoice = bucketChoice,
+                        onSelect = { bucketChoice = it },
+                    )
+                    WhenSelector(
+                        dueEpochDay = dueEpochDay,
+                        onPick = { dueEpochDay = it },
+                        onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
+                        onClear = { dueEpochDay = -1L },
+                    )
+                    RemindSelector(
+                        reminderAt = reminderAt,
+                        inOneHourMillis = inOneHourMillis,
+                        tomorrow9Millis = tomorrow9Millis,
+                        onSelect = {
+                            reminderAt = it
+                            ensureNotificationPermission()
+                        },
+                        onCustom = { pickerTarget = PickerTarget.REMINDER },
+                        onTurnOff = { reminderAt = -1L },
+                    )
+                    LabelSelector(
+                        labels = labels,
+                        selectedLabelIds = selectedLabelIds,
+                        onToggle = { labelId ->
+                            selectedLabelIds = if (labelId in selectedLabelIds) {
+                                selectedLabelIds - labelId
+                            } else {
+                                selectedLabelIds + labelId
+                            }
+                        },
+                        onNewLabel = if (onCreateLabel != null) {
+                            { showNewLabelDialog = true }
                         } else {
-                            selectedLabelIds + labelId
-                        }
-                    },
-                    onNewLabel = if (onCreateLabel != null) {
-                        { showNewLabelDialog = true }
-                    } else {
-                        null
-                    },
-                )
-                RemindSelector(
-                    reminderAt = reminderAt,
-                    inOneHourMillis = inOneHourMillis,
-                    tomorrow9Millis = tomorrow9Millis,
-                    onSelect = {
-                        reminderAt = it
-                        ensureNotificationPermission()
-                    },
-                    onCustom = { pickerTarget = PickerTarget.REMINDER },
-                    onTurnOff = { reminderAt = -1L },
-                )
+                            null
+                        },
+                    )
+                }
             }
         }
     }
@@ -353,7 +407,7 @@ private fun CategorySelector(
         BucketChoice.THIRTY_MIN -> stringResource(R.string.bucket_thirty_min)
         BucketChoice.LONG -> stringResource(R.string.bucket_long)
     }
-    SelectorButton(
+    ComposerChip(
         icon = Icons.Filled.List,
         label = label,
         active = bucketChoice != BucketChoice.AUTO,
@@ -416,7 +470,7 @@ private fun WhenSelector(
         quickPicks[3] -> stringResource(R.string.composer_weekend)
         else -> TaskComposerDefaults.formatDueDate(dueEpochDay)
     }
-    SelectorButton(
+    ComposerChip(
         icon = Icons.Outlined.DateRange,
         label = label,
         active = dueEpochDay != -1L,
@@ -479,7 +533,7 @@ private fun RemindSelector(
     } else {
         TaskComposerDefaults.formatReminder(reminderAt)
     }
-    SelectorButton(
+    ComposerChip(
         icon = Icons.Filled.Notifications,
         label = label,
         active = reminderAt != -1L,
@@ -531,7 +585,7 @@ private fun LabelSelector(
             selected.size - 1,
         )
     }
-    SelectorButton(
+    ComposerChip(
         icon = null,
         iconLabel = "#",
         label = label,
@@ -591,7 +645,7 @@ private fun NewLabelDialog(
 }
 
 @Composable
-private fun SelectorButton(
+private fun ComposerChip(
     icon: ImageVector?,
     label: String,
     active: Boolean,
@@ -600,34 +654,36 @@ private fun SelectorButton(
 ) {
     Row(
         modifier = Modifier
-            .width(112.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .heightIn(min = 40.dp)
+            .clip(RoundedCornerShape(8.dp))
             .background(SurfaceDark)
             .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (icon != null) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (active) Coral else TextSecondary,
-                modifier = Modifier.size(16.dp),
+                modifier = Modifier.size(18.dp),
             )
         } else if (iconLabel != null) {
             Text(
                 text = iconLabel,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Bold),
                 color = if (active) Coral else TextSecondary,
             )
         }
-        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (active) Coral else TextSecondary,
+            style = TextStyle(
+                fontSize = 13.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Medium,
+            ),
+            color = if (active) Coral else TextPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
