@@ -2,208 +2,173 @@ package com.diego.twodo.ui.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diego.twodo.R
-import com.diego.twodo.domain.model.ModelStatus
+import com.diego.twodo.ui.components.BucketChip
+import com.diego.twodo.ui.components.BottomSheet
+import com.diego.twodo.ui.components.PrimaryButton
+import com.diego.twodo.ui.components.TextButton
+import com.diego.twodo.ui.theme.ControlHeights
+import com.diego.twodo.ui.theme.Coral
+import com.diego.twodo.ui.theme.Spacing
+import com.diego.twodo.ui.theme.TextSecondary
+import com.diego.twodo.ui.theme.TypeTokens
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModelSetupScreen(viewModel: OnboardingViewModel = hiltViewModel()) {
-    val status by viewModel.modelStatus.collectAsState()
+    val state by viewModel.setupUiState.collectAsState()
+    val isLowRamDevice = remember { viewModel.isLowRamDevice }
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(24.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterVertically),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(R.string.setup_title),
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.setup_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-            ModelStatusCard(
-                status = status,
-                hasPartialDownload = viewModel.hasPartialDownload,
-                onDownload = viewModel::downloadModel,
-                onDownloadOverMobileData = viewModel::downloadModelOverMobileData,
-                onResume = viewModel::resumeDownload,
-                onPause = viewModel::pauseDownload,
-                onCancel = viewModel::cancelDownload,
-                onSkip = viewModel::skip,
-            )
-            if (viewModel.isLowRamDevice) {
-                LowRamCard()
-            }
-        }
-    }
-}
-
-@Composable
-private fun ModelStatusCard(
-    status: ModelStatus,
-    hasPartialDownload: Boolean,
-    onDownload: () -> Unit,
-    onDownloadOverMobileData: () -> Unit,
-    onResume: () -> Unit,
-    onPause: () -> Unit,
-    onCancel: () -> Unit,
-    onSkip: () -> Unit,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = Spacing.lg)
+                .padding(top = Spacing.lg),
         ) {
-            when (status) {
-                ModelStatus.NotDownloaded -> {
-                    if (hasPartialDownload) {
-                        Text(
-                            text = stringResource(R.string.setup_partial),
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                        )
-                        Button(onClick = onResume, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.setup_resume))
-                        }
-                    } else {
-                        Text(
-                            text = stringResource(R.string.setup_download_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                        )
-                        Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
-                            Text(stringResource(R.string.setup_download))
-                        }
-                        TextButton(onClick = onDownloadOverMobileData) {
-                            Text(stringResource(R.string.setup_download_mobile))
-                        }
-                    }
-                    TextButton(onClick = onSkip) {
-                        Text(stringResource(R.string.setup_skip))
-                    }
-                }
-                ModelStatus.WaitingForNetwork -> {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(Spacing.xs),
+            ) {
+                BucketChip(
+                    label = stringResource(R.string.setup_chip_two_min),
+                    iconTint = Coral,
+                )
+                BucketChip(
+                    label = stringResource(R.string.setup_chip_thirty_min),
+                    iconTint = TextSecondary,
+                )
+                BucketChip(
+                    label = stringResource(R.string.setup_chip_long),
+                    iconTint = TextSecondary,
+                )
+            }
+            Spacer(modifier = Modifier.height(Spacing.xl))
+            Text(
+                text = stringResource(R.string.setup_title),
+                style = TypeTokens.ScreenTitle,
+            )
+            Spacer(modifier = Modifier.height(Spacing.md))
+            Text(
+                text = stringResource(R.string.setup_description),
+                style = TypeTokens.Body,
+            )
+            if (isLowRamDevice) {
+                Spacer(modifier = Modifier.height(Spacing.md))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = TextSecondary,
+                    )
+                    Spacer(modifier = Modifier.width(Spacing.xs))
                     Text(
-                        text = stringResource(R.string.setup_waiting_network),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
+                        text = stringResource(R.string.setup_low_ram),
+                        style = TypeTokens.Caption,
+                        modifier = Modifier.weight(1f),
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = onPause) {
-                            Text(stringResource(R.string.setup_pause))
-                        }
-                        TextButton(onClick = onCancel) {
-                            Text(stringResource(R.string.setup_cancel))
-                        }
-                    }
-                    TextButton(onClick = onDownloadOverMobileData) {
-                        Text(stringResource(R.string.setup_download_mobile))
-                    }
-                }
-                is ModelStatus.Downloading -> {
-                    Text(
-                        text = stringResource(R.string.setup_progress_format, status.progress),
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    LinearProgressIndicator(
-                        progress = { status.progress / 100f },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(onClick = onPause) {
-                            Text(stringResource(R.string.setup_pause))
-                        }
-                        TextButton(onClick = onCancel) {
-                            Text(stringResource(R.string.setup_cancel))
-                        }
-                    }
-                }
-                is ModelStatus.Ready -> {
-                    Text(
-                        text = stringResource(R.string.setup_ready),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                is ModelStatus.Error -> {
-                    Text(
-                        text = stringResource(R.string.setup_error_format, status.message),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
-                    )
-                    Button(onClick = onDownload, modifier = Modifier.fillMaxWidth()) {
-                        Text(stringResource(R.string.setup_retry))
-                    }
-                    TextButton(onClick = onSkip) {
-                        Text(stringResource(R.string.setup_skip))
-                    }
                 }
             }
         }
+        Spacer(modifier = Modifier.weight(1f))
+        SetupSheet(state = state, viewModel = viewModel)
     }
 }
 
 @Composable
-private fun LowRamCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(imageVector = Icons.Filled.Warning, contentDescription = null)
-            Text(
-                text = stringResource(R.string.setup_low_ram),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(start = 12.dp),
-            )
+private fun SetupSheet(state: SetupUiState, viewModel: OnboardingViewModel) {
+    BottomSheet {
+        val caption = when (state) {
+            is SetupUiState.Downloading ->
+                if (state.overMobileData) stringResource(R.string.setup_caption_downloading_mobile)
+                else stringResource(R.string.setup_caption_downloading_wifi)
+            SetupUiState.Done -> stringResource(R.string.setup_caption_done)
+            SetupUiState.Skipped -> stringResource(R.string.setup_caption_skipped)
+            is SetupUiState.Error -> stringResource(R.string.setup_error_format, state.message)
+            SetupUiState.Idle -> stringResource(R.string.setup_download_hint)
         }
+        Text(
+            text = caption,
+            style = TypeTokens.Caption,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = ControlHeights.captionMinHeight),
+        )
+        Spacer(modifier = Modifier.height(Spacing.md))
+
+        val label: String
+        val onClick: (() -> Unit)?
+        val progress: Float?
+        when (state) {
+            is SetupUiState.Downloading -> {
+                label = stringResource(R.string.setup_progress_format, state.progress)
+                onClick = null
+                progress = state.progress / 100f
+            }
+            SetupUiState.Done -> {
+                label = stringResource(R.string.setup_done)
+                onClick = viewModel::acknowledgeDone
+                progress = null
+            }
+            SetupUiState.Skipped -> {
+                label = stringResource(R.string.setup_download)
+                onClick = viewModel::downloadOverWifi
+                progress = null
+            }
+            is SetupUiState.Error -> {
+                label = stringResource(R.string.setup_retry)
+                onClick = viewModel::retryDownload
+                progress = null
+            }
+            SetupUiState.Idle -> {
+                label = stringResource(R.string.setup_download)
+                onClick = viewModel::downloadOverWifi
+                progress = null
+            }
+        }
+        PrimaryButton(
+            text = label,
+            onClick = onClick,
+            progress = progress,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Spacer(modifier = Modifier.height(Spacing.xs))
+        TextButton(
+            text = stringResource(R.string.setup_download_mobile),
+            onClick = viewModel::downloadOverMobileData,
+            enabled = state !is SetupUiState.Downloading,
+        )
+        Spacer(modifier = Modifier.height(Spacing.xxs))
+        TextButton(
+            text = stringResource(R.string.setup_skip),
+            onClick = viewModel::skip,
+            labelColor = TextSecondary,
+        )
     }
 }

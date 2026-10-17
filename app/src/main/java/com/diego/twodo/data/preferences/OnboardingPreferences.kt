@@ -18,9 +18,11 @@ class OnboardingPreferences @Inject constructor(
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val dismissedFlow = MutableStateFlow(prefs.getBoolean(KEY_ONBOARDING_DISMISSED, false))
     private val welcomeCompletedFlow = MutableStateFlow(prefs.getBoolean(KEY_WELCOME_COMPLETED, false))
+    private val setupSkippedFlow = MutableStateFlow(prefs.getBoolean(KEY_SETUP_SKIPPED, false))
 
     val isOnboardingDismissed: StateFlow<Boolean> = dismissedFlow.asStateFlow()
     val isWelcomeCompleted: StateFlow<Boolean> = welcomeCompletedFlow.asStateFlow()
+    val isSetupSkipped: StateFlow<Boolean> = setupSkippedFlow.asStateFlow()
 
     // SharedPreferences only holds a weak reference to listeners; keep a strong one
     // in a field so this doesn't get garbage-collected after initialization.
@@ -31,6 +33,8 @@ class OnboardingPreferences @Inject constructor(
                     dismissedFlow.value = sharedPreferences.getBoolean(KEY_ONBOARDING_DISMISSED, false)
                 KEY_WELCOME_COMPLETED ->
                     welcomeCompletedFlow.value = sharedPreferences.getBoolean(KEY_WELCOME_COMPLETED, false)
+                KEY_SETUP_SKIPPED ->
+                    setupSkippedFlow.value = sharedPreferences.getBoolean(KEY_SETUP_SKIPPED, false)
             }
         }
 
@@ -48,9 +52,15 @@ class OnboardingPreferences @Inject constructor(
         prefs.edit().putBoolean(KEY_WELCOME_COMPLETED, completed).apply()
     }
 
+    suspend fun setSetupSkipped(skipped: Boolean) = withContext(Dispatchers.IO) {
+        setupSkippedFlow.value = skipped
+        prefs.edit().putBoolean(KEY_SETUP_SKIPPED, skipped).apply()
+    }
+
     private companion object {
         const val PREFS_NAME = "twodo_settings"
         const val KEY_ONBOARDING_DISMISSED = "onboarding_dismissed"
         const val KEY_WELCOME_COMPLETED = "welcome_completed"
+        const val KEY_SETUP_SKIPPED = "setup_skipped"
     }
 }

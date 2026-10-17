@@ -4,6 +4,7 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 
 val Typography = Typography(
@@ -11,7 +12,8 @@ val Typography = Typography(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Bold,
         fontSize = 30.sp,
-        lineHeight = 38.sp,
+        lineHeight = 36.sp,
+        letterSpacing = (-0.01).em,
     ),
     titleMedium = TextStyle(
         fontFamily = FontFamily.Default,
@@ -29,7 +31,7 @@ val Typography = Typography(
         fontFamily = FontFamily.Default,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
-        lineHeight = 21.sp,
+        lineHeight = 22.sp,
     ),
     bodySmall = TextStyle(
         fontFamily = FontFamily.Default,

@@ -1,26 +1,29 @@
 <resources>
     <string name="app_name">Two.do</string>
 
-    <string name="welcome_title">Two.do do seu jeito</string>
-    <string name="welcome_body">Planejar é o processo de pensar sobre as atividades necessárias para alcançar um objetivo desejado.</string>
+    <string name="welcome_title">Saiba quais tarefas cabem no tempo que você tem</string>
+    <string name="welcome_body">O Two.do organiza cada tarefa em 2 min, 30 min ou longas, para você escolher a próxima sem pensar.</string>
     <string name="welcome_start">Vamos começar</string>
 
     <string name="setup_title">Configure a IA no dispositivo</string>
-    <string name="setup_description">O Two.do organiza cada tarefa em ⚡ 2 min, ⏱️ 30 min ou 🏗️ longo. Um modelo de IA rodando inteiramente no seu celular torna a organização mais inteligente — nada sai do seu aparelho.</string>
+    <string name="setup_description">O Two.do organiza cada tarefa em 2 min, 30 min ou longas. Um modelo de IA rodando inteiramente no seu celular torna a organização mais inteligente. Nada sai do seu aparelho.</string>
     <string name="setup_download_hint">Download único por Wi-Fi. Depois, tudo funciona offline.</string>
     <string name="setup_download">Baixar modelo (Wi-Fi)</string>
-    <string name="setup_resume">Retomar download</string>
-    <string name="setup_partial">Encontramos um download parcial. Continuar de onde parou?</string>
-    <string name="setup_pause">Pausar</string>
-    <string name="setup_cancel">Cancelar</string>
     <string name="setup_skip">Pular por enquanto</string>
-    <string name="setup_ready">Modelo pronto 🎉 Suas tarefas ficaram mais inteligentes.</string>
-    <string name="setup_progress_format">Baixando… %1$d%%</string>
-    <string name="setup_waiting_network">Aguardando conexão de rede… o download começará automaticamente.</string>
+    <string name="setup_caption_downloading_wifi">Baixando por Wi-Fi. Mantenha esta tela aberta.</string>
+    <string name="setup_caption_downloading_mobile">Baixando por dados móveis. Mantenha esta tela aberta.</string>
+    <string name="setup_caption_done">Modelo pronto. Tudo funciona offline.</string>
+    <string name="setup_caption_skipped">Pulado por enquanto.</string>
+    <string name="setup_done">Concluído. Toque para refazer</string>
+    <string name="setup_progress_format">Baixando %1$d%%</string>
     <string name="setup_download_mobile">Usar dados móveis</string>
     <string name="setup_low_ram">Este dispositivo tem pouca memória, então o Two.do classificará tarefas com regras instantâneas em vez do modelo de IA.</string>
     <string name="setup_error_format">Falha no download: %1$s</string>
     <string name="setup_retry">Tentar novamente</string>
+    <string name="setup_chip_two_min">2 min</string>
+    <string name="setup_chip_thirty_min">30 min</string>
+    <string name="setup_chip_long">Longas</string>
+    <string name="illustration_cd">Ilustração de tarefas crescendo por duração: 2 minutos, 30 minutos e longas</string>
 
     <string name="task_list_title">Lista de tarefas</string>
     <string name="add_label">Adicionar</string>

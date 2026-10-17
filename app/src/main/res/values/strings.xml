@@ -1,26 +1,29 @@
 <resources>
     <string name="app_name">Two.do</string>
 
-    <string name="welcome_title">Two.do as you want it</string>
-    <string name="welcome_body">Planning is the process of thinking about the activities required to achieve a desired goal.</string>
+    <string name="welcome_title">Know which tasks fit the time you have</string>
+    <string name="welcome_body">Two.do sorts every task into 2 min, 30 min or long, so you can pick the next one without thinking about it.</string>
     <string name="welcome_start">Let\'s Start</string>
 
     <string name="setup_title">Set up on-device AI</string>
-    <string name="setup_description">Two.do sorts every task into ⚡ 2 min, ⏱️ 30 min or 🏗️ long. An AI model running entirely on your phone makes the sorting smarter — nothing ever leaves your device.</string>
+    <string name="setup_description">Two.do sorts every task into 2 min, 30 min or long. An AI model running entirely on your phone makes the sorting smarter. Nothing ever leaves your device.</string>
     <string name="setup_download_hint">One-time Wi-Fi download. Everything runs offline afterwards.</string>
     <string name="setup_download">Download model (Wi-Fi)</string>
-    <string name="setup_resume">Resume download</string>
-    <string name="setup_partial">A partial download was found. Pick up where you left off?</string>
-    <string name="setup_pause">Pause</string>
-    <string name="setup_cancel">Cancel</string>
     <string name="setup_skip">Skip for now</string>
-    <string name="setup_ready">Model ready 🎉 Your tasks just got smarter.</string>
-    <string name="setup_progress_format">Downloading… %1$d%%</string>
-    <string name="setup_waiting_network">Waiting for a network connection… the download will start automatically.</string>
+    <string name="setup_caption_downloading_wifi">Downloading over Wi-Fi. Keep this screen open.</string>
+    <string name="setup_caption_downloading_mobile">Downloading over mobile data. Keep this screen open.</string>
+    <string name="setup_caption_done">Model ready. Everything runs offline.</string>
+    <string name="setup_caption_skipped">Skipped for now.</string>
+    <string name="setup_done">Done. Tap to redo</string>
+    <string name="setup_progress_format">Downloading %1$d%%</string>
     <string name="setup_download_mobile">Use mobile data instead</string>
     <string name="setup_low_ram">This device is low on memory, so Two.do will classify tasks with instant rules instead of the AI model.</string>
     <string name="setup_error_format">Download failed: %1$s</string>
     <string name="setup_retry">Try again</string>
+    <string name="setup_chip_two_min">2 min</string>
+    <string name="setup_chip_thirty_min">30 min</string>
+    <string name="setup_chip_long">Long</string>
+    <string name="illustration_cd">Illustration of tasks growing by duration: 2 minutes, 30 minutes and long</string>
 
     <string name="task_list_title">Task list</string>
     <string name="add_label">Add</string>
