@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.diego.twodo.R
+import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.ui.theme.Coral
@@ -66,6 +67,7 @@ fun TaskRow(
     onEdit: (Task) -> Unit,
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    labels: List<Label> = emptyList(),
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var completing by remember { mutableStateOf(false) }
@@ -116,6 +118,16 @@ fun TaskRow(
                 .weight(1f)
                 .padding(vertical = 10.dp),
         )
+        if (labels.isNotEmpty()) {
+            Text(
+                text = labels.joinToString(" ") { "#${it.name}" },
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         if (task.dueDate != null) {
             Text(
                 text = Instant.ofEpochMilli(task.dueDate).atZone(ZoneId.systemDefault())

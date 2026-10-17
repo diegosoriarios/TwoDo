@@ -24,6 +24,7 @@
 
     <string name="task_list_title">Task list</string>
     <string name="add_label">Add</string>
+    <string name="filter_all">All</string>
     <string name="summary_task_count_format">%1$d tasks</string>
     <string name="card_two_min_label">2 minutes</string>
     <string name="card_thirty_min_label">30 minutes</string>

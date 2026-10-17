@@ -89,6 +89,7 @@ fun CalendarScreen(
                         onToggle = viewModel::toggleTaskCompletion,
                         onEdit = { editingTaskId = it.id },
                         onDelete = { taskToDeleteId = it },
+                        labels = taskLabelMap[task.id].orEmpty(),
                     )
                 }
             }
@@ -105,6 +106,7 @@ fun CalendarScreen(
                         onToggle = viewModel::toggleTaskCompletion,
                         onEdit = { editingTaskId = it.id },
                         onDelete = { taskToDeleteId = it },
+                        labels = taskLabelMap[task.id].orEmpty(),
                     )
                 }
             }
