@@ -58,7 +58,6 @@
     <string name="widget_description">Tarefas para hoje com itens de ⚡ 2 minutos primeiro — marque como concluídas direto no widget.</string>
     <string name="widget_today">Hoje</string>
     <string name="widget_today_empty_title">Nada para hoje 🎉</string>
-    <string name="widget_more_format">+%1$d mais</string>
     <string name="widget_check_cd">Marcar tarefa como concluída</string>
     <string name="widget_filter_title">Filtro</string>
     <string name="widget_filter_cd">Alterar filtro</string>

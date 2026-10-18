@@ -19,6 +19,8 @@ import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.state.PreferencesGlanceStateDefinition
@@ -59,7 +61,6 @@ private data class WidgetStrings(
     val emptyTitle: String,
     val addTaskCd: String,
     val checkCd: String,
-    val more: String?,
 )
 
 private val KEY_EDIT_TASK_ID = ActionParameters.Key<Long>(EditTaskActivity.EXTRA_TASK_ID)
@@ -88,11 +89,6 @@ class TasksWidget : GlanceAppWidget() {
                 },
                 addTaskCd = context.getString(R.string.task_add_cd),
                 checkCd = context.getString(R.string.widget_check_cd),
-                more = if (sorted.size > MAX_TASK_ROWS) {
-                    context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
-                } else {
-                    null
-                },
             )
             TasksWidgetContent(sorted, strings, appWidgetId, filter)
         }
@@ -121,17 +117,10 @@ class TasksWidget : GlanceAppWidget() {
                 if (tasks.isEmpty()) {
                     EmptyState(strings.emptyTitle)
                 } else {
-                    Column {
-                        tasks.take(MAX_TASK_ROWS).forEach { task ->
+                    LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
+                        items(tasks) { task ->
                             TaskRow(task, strings.checkCd)
                             Spacer(modifier = GlanceModifier.height(6.dp))
-                        }
-                        strings.more?.let { extraText ->
-                            Text(
-                                text = extraText,
-                                style = TextStyle(fontSize = 12.sp, color = WidgetTextSecondary),
-                                modifier = GlanceModifier.padding(vertical = 2.dp),
-                            )
                         }
                     }
                 }
@@ -251,9 +240,5 @@ class TasksWidget : GlanceAppWidget() {
                 modifier = GlanceModifier.defaultWeight(),
             )
         }
-    }
-
-    private companion object {
-        const val MAX_TASK_ROWS = 6
     }
 }
