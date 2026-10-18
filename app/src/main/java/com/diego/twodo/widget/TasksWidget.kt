@@ -119,8 +119,9 @@ class TasksWidget : GlanceAppWidget() {
                 } else {
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                         items(tasks) { task ->
-                            TaskRow(task, strings.checkCd)
-                            Spacer(modifier = GlanceModifier.height(6.dp))
+                            Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
+                                TaskRow(task, strings.checkCd)
+                            }
                         }
                     }
                 }
