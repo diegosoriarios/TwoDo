@@ -59,6 +59,15 @@
     <string name="widget_today">Hoje</string>
     <string name="widget_today_empty_title">Nada para hoje 🎉</string>
     <string name="widget_more_format">+%1$d mais</string>
+    <string name="widget_check_cd">Marcar tarefa como concluída</string>
+    <string name="widget_filter_title">Filtro</string>
+    <string name="widget_filter_cd">Alterar filtro</string>
+    <string name="widget_filter_two_min">⚡ 2 min</string>
+    <string name="widget_filter_thirty_min">⏱️ 30 min</string>
+    <string name="widget_filter_previous">Anteriores</string>
+    <string name="widget_filter_future">Futuras</string>
+    <string name="widget_filter_all">Todas</string>
+    <string name="widget_generic_empty_title">Nada por aqui 🎉</string>
 
     <string name="tab_tasks">Tarefas</string>
     <string name="tab_calendar">Calendário</string>
@@ -74,7 +83,6 @@
     <string name="composer_next_week">Próxima semana</string>
     <string name="composer_weekend">Fim de semana</string>
     <string name="composer_pick_date">Escolher data</string>
-    <string name="composer_no_date">Sem data</string>
     <string name="composer_label">Etiqueta</string>
     <string name="composer_new_label">Nova etiqueta…</string>
     <string name="label_dialog_title">Nova etiqueta</string>

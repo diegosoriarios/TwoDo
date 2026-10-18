@@ -4,19 +4,24 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalState
+import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
@@ -33,12 +38,12 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
+import com.diego.twodo.ui.quickadd.EditTaskActivity
 import com.diego.twodo.ui.quickadd.QuickAddActivity
 import kotlinx.coroutines.flow.first
-import java.time.LocalDate
-import java.time.ZoneId
 
 private val WidgetBackground = ColorProvider(Color(0xFF121212))
 private val WidgetSurface = ColorProvider(Color(0xFF252525))
@@ -50,49 +55,62 @@ private val WidgetWhite = ColorProvider(Color(0xFFFFFFFF))
 
 private data class WidgetStrings(
     val appName: String,
-    val today: String,
+    val filterLabel: String,
+    val filterCd: String,
     val emptyTitle: String,
     val addTaskCd: String,
     val more: String?,
 )
 
+private val KEY_EDIT_TASK_ID = ActionParameters.Key<Long>(EditTaskActivity.EXTRA_TASK_ID)
+private val KEY_FILTER_APP_WIDGET_ID = ActionParameters.Key<Int>(FilterPickerActivity.EXTRA_APP_WIDGET_ID)
+private val KEY_FILTER_CURRENT = ActionParameters.Key<String>(FilterPickerActivity.EXTRA_CURRENT_FILTER)
+
 class TasksWidget : GlanceAppWidget() {
+
+    override val stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
         val tasks = taskRepository.getActiveTasks().first()
-        val zone = ZoneId.systemDefault()
-        val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
-        val tomorrowStart = LocalDate.now(zone).plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val dueToday = tasks
-            .filter { it.dueDate != null && it.dueDate < tomorrowStart }
-            .sortedWith(compareBy({ it.dueDate }, { it.createdAt }))
-        val sorted = dueToday
-        val strings = WidgetStrings(
-            appName = context.getString(R.string.app_name),
-            today = context.getString(R.string.widget_today),
-            emptyTitle = context.getString(R.string.widget_today_empty_title),
-            addTaskCd = context.getString(R.string.task_add_cd),
-            more = if (sorted.size > MAX_TASK_ROWS) {
-                context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
-            } else {
-                null
-            },
-        )
+        val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         provideContent {
-            TasksWidgetContent(sorted, strings)
+            val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
+            val sorted = filter.apply(tasks)
+            val strings = WidgetStrings(
+                appName = stringResource(R.string.app_name),
+                filterLabel = filter.label(),
+                filterCd = stringResource(R.string.widget_filter_cd),
+                emptyTitle = if (filter == WidgetFilter.TODAY) {
+                    stringResource(R.string.widget_today_empty_title)
+                } else {
+                    stringResource(R.string.widget_generic_empty_title)
+                },
+                addTaskCd = stringResource(R.string.task_add_cd),
+                more = if (sorted.size > MAX_TASK_ROWS) {
+                    stringResource(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
+                } else {
+                    null
+                },
+            )
+            TasksWidgetContent(sorted, strings, appWidgetId, filter)
         }
     }
 
     @Composable
-    private fun TasksWidgetContent(tasks: List<Task>, strings: WidgetStrings) {
+    private fun TasksWidgetContent(
+        tasks: List<Task>,
+        strings: WidgetStrings,
+        appWidgetId: Int,
+        filter: WidgetFilter,
+    ) {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(WidgetBackground)
                 .cornerRadius(16.dp),
         ) {
-            WidgetHeader(strings)
+            WidgetHeader(strings, appWidgetId, filter)
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
@@ -121,7 +139,13 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun WidgetHeader(strings: WidgetStrings) {
+    private fun WidgetHeader(strings: WidgetStrings, appWidgetId: Int, filter: WidgetFilter) {
+        val filterAction = actionStartActivity<FilterPickerActivity>(
+            parameters = actionParametersOf(
+                KEY_FILTER_APP_WIDGET_ID to appWidgetId,
+                KEY_FILTER_CURRENT to filter.name,
+            ),
+        )
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
@@ -146,14 +170,17 @@ class TasksWidget : GlanceAppWidget() {
                 maxLines = 1,
             )
             Spacer(modifier = GlanceModifier.defaultWeight())
-            Text(
-                text = strings.today,
-                style = TextStyle(
-                    fontSize = 12.sp,
-                    color = WidgetTextSecondary,
-                ),
-                maxLines = 1,
-            )
+            Box(
+                modifier = GlanceModifier.clickable(filterAction),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = strings.filterLabel,
+                    style = TextStyle(fontSize = 12.sp, color = WidgetTextSecondary),
+                    maxLines = 1,
+                    modifier = GlanceModifier.padding(horizontal = 4.dp, vertical = 8.dp),
+                )
+            }
             Spacer(modifier = GlanceModifier.width(8.dp))
             Box(
                 modifier = GlanceModifier
@@ -195,20 +222,25 @@ class TasksWidget : GlanceAppWidget() {
         val toggleAction = actionRunCallback<ToggleTaskAction>(
             parameters = actionParametersOf(ToggleTaskAction.KEY_TASK_ID to task.id),
         )
+        val editAction = actionStartActivity<EditTaskActivity>(
+            parameters = actionParametersOf(KEY_EDIT_TASK_ID to task.id),
+        )
         Row(
             modifier = GlanceModifier
                 .fillMaxWidth()
                 .height(40.dp)
                 .cornerRadius(4.dp)
                 .background(WidgetSurface)
-                .clickable(toggleAction)
+                .clickable(editAction)
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
-                contentDescription = null,
-                modifier = GlanceModifier.size(18.dp),
+                contentDescription = stringResource(R.string.widget_check_cd),
+                modifier = GlanceModifier
+                    .size(18.dp)
+                    .clickable(toggleAction),
             )
             Spacer(modifier = GlanceModifier.width(12.dp))
             Text(

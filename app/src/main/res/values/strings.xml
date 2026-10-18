@@ -59,6 +59,15 @@
     <string name="widget_today">Today</string>
     <string name="widget_today_empty_title">Nothing due today 🎉</string>
     <string name="widget_more_format">+%1$d more</string>
+    <string name="widget_check_cd">Mark task as done</string>
+    <string name="widget_filter_title">Filter</string>
+    <string name="widget_filter_cd">Change filter</string>
+    <string name="widget_filter_two_min">⚡ 2 min</string>
+    <string name="widget_filter_thirty_min">⏱️ 30 min</string>
+    <string name="widget_filter_previous">Previous</string>
+    <string name="widget_filter_future">Future</string>
+    <string name="widget_filter_all">All</string>
+    <string name="widget_generic_empty_title">Nothing here 🎉</string>
 
     <string name="tab_tasks">Tasks</string>
     <string name="tab_calendar">Calendar</string>
@@ -74,7 +83,6 @@
     <string name="composer_next_week">Next week</string>
     <string name="composer_weekend">Weekend</string>
     <string name="composer_pick_date">Pick date</string>
-    <string name="composer_no_date">No date</string>
     <string name="composer_label">Label</string>
     <string name="composer_new_label">New label…</string>
     <string name="label_dialog_title">New label</string>

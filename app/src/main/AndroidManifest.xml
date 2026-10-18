@@ -39,6 +39,23 @@
             android:theme="@style/Theme.TwoDo.QuickAdd"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".ui.quickadd.EditTaskActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity=""
+            android:theme="@style/Theme.TwoDo.QuickAdd"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".widget.FilterPickerActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:taskAffinity=""
+            android:theme="@style/Theme.TwoDo.QuickAdd"
+            android:windowSoftInputMode="adjustResize" />
+
         <receiver
             android:name=".widget.TasksWidgetReceiver"
             android:exported="false"

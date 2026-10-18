@@ -246,7 +246,6 @@ fun TaskComposerSheet(
                         dueEpochDay = dueEpochDay,
                         onPick = { dueEpochDay = it },
                         onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
-                        onClear = { dueEpochDay = -1L },
                     )
                     RemindSelector(
                         reminderAt = reminderAt,
@@ -450,7 +449,6 @@ private fun WhenSelector(
     dueEpochDay: Long,
     onPick: (Long) -> Unit,
     onPickDate: () -> Unit,
-    onClear: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val today = remember { LocalDate.now() }
@@ -508,12 +506,6 @@ private fun WhenSelector(
         MenuOption(label = stringResource(R.string.composer_pick_date), selected = false) {
             expanded = false
             onPickDate()
-        }
-        if (dueEpochDay != -1L) {
-            MenuOption(label = stringResource(R.string.composer_no_date), selected = false) {
-                onClear()
-                expanded = false
-            }
         }
     }
 }

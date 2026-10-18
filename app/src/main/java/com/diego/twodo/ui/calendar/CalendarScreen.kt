@@ -146,8 +146,15 @@ private fun List<Task>.filterDueOn(date: LocalDate): List<Task> {
     val zone = ZoneId.systemDefault()
     val dayStart = date.atStartOfDay(zone).toInstant().toEpochMilli()
     val dayEnd = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
-    return filter { it.dueDate != null && it.dueDate >= dayStart && it.dueDate < dayEnd }
-        .sortedForDisplay()
+    val isToday = date == LocalDate.now()
+    return filter { task ->
+        val dueDate = task.dueDate
+        when {
+            dueDate == null -> isToday
+            dueDate >= dayStart && dueDate < dayEnd -> true
+            else -> false
+        }
+    }.sortedForDisplay()
 }
 
 private fun List<Task>.filterCompletedOn(date: LocalDate): List<Task> {

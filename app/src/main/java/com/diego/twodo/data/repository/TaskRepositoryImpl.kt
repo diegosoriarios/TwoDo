@@ -14,6 +14,8 @@ import com.diego.twodo.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -93,7 +95,7 @@ class TaskRepositoryImpl @Inject constructor(
             bucket = bucket,
             bucketSource = source,
             isCompleted = false,
-            dueDate = dueDate,
+            dueDate = dueDate ?: startOfTodayMillis(),
             reminderAt = reminderAt,
             createdAt = now,
             updatedAt = now
@@ -126,7 +128,7 @@ class TaskRepositoryImpl @Inject constructor(
                 title = title,
                 bucket = newBucket,
                 bucketSource = newSource,
-                dueDate = dueDate,
+                dueDate = dueDate ?: startOfTodayMillis(),
                 reminderAt = reminderAt,
                 updatedAt = System.currentTimeMillis(),
             )
@@ -174,6 +176,9 @@ class TaskRepositoryImpl @Inject constructor(
         reminderScheduler.cancel(id)
         taskDao.deleteTaskById(id)
     }
+
+    private fun startOfTodayMillis(): Long =
+        LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
     private fun LabelEntity.toDomain(): Label = Label(
         id = id,
