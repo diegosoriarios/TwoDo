@@ -40,6 +40,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
+import com.diego.twodo.MainActivity
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.ui.quickadd.EditTaskActivity
@@ -61,6 +62,7 @@ private data class WidgetStrings(
     val emptyTitle: String,
     val addTaskCd: String,
     val checkCd: String,
+    val openAppCd: String,
 )
 
 private val KEY_EDIT_TASK_ID = ActionParameters.Key<Long>(EditTaskActivity.EXTRA_TASK_ID)
@@ -89,6 +91,7 @@ class TasksWidget : GlanceAppWidget() {
                 },
                 addTaskCd = context.getString(R.string.task_add_cd),
                 checkCd = context.getString(R.string.widget_check_cd),
+                openAppCd = context.getString(R.string.widget_open_app_cd),
             )
             TasksWidgetContent(sorted, strings, appWidgetId, filter)
         }
@@ -147,8 +150,10 @@ class TasksWidget : GlanceAppWidget() {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_logo),
-                contentDescription = null,
-                modifier = GlanceModifier.size(20.dp),
+                contentDescription = strings.openAppCd,
+                modifier = GlanceModifier
+                    .size(20.dp)
+                    .clickable(actionStartActivity<MainActivity>()),
             )
             Spacer(modifier = GlanceModifier.width(6.dp))
             Text(

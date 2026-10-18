@@ -59,6 +59,7 @@
     <string name="widget_today">Hoje</string>
     <string name="widget_today_empty_title">Nada para hoje 🎉</string>
     <string name="widget_check_cd">Marcar tarefa como concluída</string>
+    <string name="widget_open_app_cd">Abrir TwoDo</string>
     <string name="widget_filter_title">Filtro</string>
     <string name="widget_filter_cd">Alterar filtro</string>
     <string name="widget_filter_two_min">⚡ 2 min</string>
