@@ -1,7 +1,5 @@
 package com.diego.twodo.widget
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.diego.twodo.R
@@ -39,14 +37,13 @@ enum class WidgetFilter {
         )
     }
 
-    @Composable
-    fun label(): String = when (this) {
-        TODAY -> stringResource(R.string.widget_today)
-        TWO_MIN -> stringResource(R.string.widget_filter_two_min)
-        THIRTY_MIN -> stringResource(R.string.widget_filter_thirty_min)
-        PREVIOUS -> stringResource(R.string.widget_filter_previous)
-        FUTURE -> stringResource(R.string.widget_filter_future)
-        ALL -> stringResource(R.string.widget_filter_all)
+    fun labelRes(): Int = when (this) {
+        TODAY -> R.string.widget_today
+        TWO_MIN -> R.string.widget_filter_two_min
+        THIRTY_MIN -> R.string.widget_filter_thirty_min
+        PREVIOUS -> R.string.widget_filter_previous
+        FUTURE -> R.string.widget_filter_future
+        ALL -> R.string.widget_filter_all
     }
 }
 

@@ -138,7 +138,7 @@ private fun FilterPickerSheet(
             )
             WidgetFilter.entries.forEach { filter ->
                 FilterOption(
-                    label = filter.label(),
+                    label = stringResource(filter.labelRes()),
                     selected = filter == current,
                     onClick = { onSelect(filter) },
                 )

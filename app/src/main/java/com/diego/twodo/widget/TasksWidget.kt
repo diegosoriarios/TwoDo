@@ -38,7 +38,6 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.ui.quickadd.EditTaskActivity
@@ -59,6 +58,7 @@ private data class WidgetStrings(
     val filterCd: String,
     val emptyTitle: String,
     val addTaskCd: String,
+    val checkCd: String,
     val more: String?,
 )
 
@@ -78,17 +78,18 @@ class TasksWidget : GlanceAppWidget() {
             val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
             val sorted = filter.apply(tasks)
             val strings = WidgetStrings(
-                appName = stringResource(R.string.app_name),
-                filterLabel = filter.label(),
-                filterCd = stringResource(R.string.widget_filter_cd),
+                appName = context.getString(R.string.app_name),
+                filterLabel = context.getString(filter.labelRes()),
+                filterCd = context.getString(R.string.widget_filter_cd),
                 emptyTitle = if (filter == WidgetFilter.TODAY) {
-                    stringResource(R.string.widget_today_empty_title)
+                    context.getString(R.string.widget_today_empty_title)
                 } else {
-                    stringResource(R.string.widget_generic_empty_title)
+                    context.getString(R.string.widget_generic_empty_title)
                 },
-                addTaskCd = stringResource(R.string.task_add_cd),
+                addTaskCd = context.getString(R.string.task_add_cd),
+                checkCd = context.getString(R.string.widget_check_cd),
                 more = if (sorted.size > MAX_TASK_ROWS) {
-                    stringResource(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
+                    context.getString(R.string.widget_more_format, sorted.size - MAX_TASK_ROWS)
                 } else {
                     null
                 },
@@ -122,7 +123,7 @@ class TasksWidget : GlanceAppWidget() {
                 } else {
                     Column {
                         tasks.take(MAX_TASK_ROWS).forEach { task ->
-                            TaskRow(task)
+                            TaskRow(task, strings.checkCd)
                             Spacer(modifier = GlanceModifier.height(6.dp))
                         }
                         strings.more?.let { extraText ->
@@ -218,7 +219,7 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun TaskRow(task: Task) {
+    private fun TaskRow(task: Task, checkCd: String) {
         val toggleAction = actionRunCallback<ToggleTaskAction>(
             parameters = actionParametersOf(ToggleTaskAction.KEY_TASK_ID to task.id),
         )
@@ -237,7 +238,7 @@ class TasksWidget : GlanceAppWidget() {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
-                contentDescription = stringResource(R.string.widget_check_cd),
+                contentDescription = checkCd,
                 modifier = GlanceModifier
                     .size(18.dp)
                     .clickable(toggleAction),
