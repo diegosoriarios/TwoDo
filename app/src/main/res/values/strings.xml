@@ -95,6 +95,7 @@
     <string name="composer_turn_off">Turn off</string>
     <string name="composer_ok">OK</string>
     <string name="composer_cancel">Cancel</string>
+    <string name="composer_done_cd">Done editing</string>
 
     <string name="notification_channel_name">Task reminders</string>
     <string name="notification_channel_description">Notifications that remind you about tasks</string>

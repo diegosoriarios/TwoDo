@@ -18,6 +18,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 
 @HiltViewModel
@@ -44,6 +46,8 @@ class TasksViewModel @Inject constructor(
 
     val canUseLlm: Boolean
         get() = modelManager.canUseLlm()
+
+    private val updateMutex = Mutex()
 
     init {
         viewModelScope.launch {
@@ -84,8 +88,10 @@ class TasksViewModel @Inject constructor(
     ) {
         if (title.isBlank()) return
         viewModelScope.launch {
-            taskRepository.updateTaskDetails(id, title.trim(), bucket, dueDate, reminderAt, labelIds)
-            TasksWidget().updateAll(context)
+            updateMutex.withLock {
+                taskRepository.updateTaskDetails(id, title.trim(), bucket, dueDate, reminderAt, labelIds)
+                TasksWidget().updateAll(context)
+            }
         }
     }
 

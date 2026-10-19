@@ -56,6 +56,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -89,6 +90,9 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
@@ -100,12 +104,15 @@ private enum class PickerTarget { DUE_DATE, REMINDER }
  * QuickAddActivity. Pure UI — persistence happens through [onSubmit] at the call site.
  * Pass [initialTitle]/[initialBucket]/[initialDueDate]/[initialReminderAt]/
  * [initialLabelIds] to edit an existing task; leave them empty for new-task mode.
+ * When editing, provide [autoSave] so every change persists immediately and the
+ * sheet only needs a Done action to close.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, FlowPreview::class)
 @Composable
 fun TaskComposerSheet(
     onDismiss: () -> Unit,
     onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>) -> Unit,
+    autoSave: ((title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>) -> Unit)? = null,
     labels: List<Label> = emptyList(),
     onCreateLabel: ((name: String, onCreated: (Long) -> Unit) -> Unit)? = null,
     initialTitle: String = "",
@@ -124,6 +131,22 @@ fun TaskComposerSheet(
     var showNewLabelDialog by rememberSaveable { mutableStateOf(false) }
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var pendingReminderEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
+
+    val isEditing = autoSave != null
+    val latestAutoSave by rememberUpdatedState(autoSave)
+    val persist: () -> Unit = {
+        val save = latestAutoSave
+        val trimmed = text.trim()
+        if (save != null && trimmed.isNotBlank()) {
+            save(
+                trimmed,
+                bucketChoice.toBucket(),
+                TaskComposerDefaults.epochDayToMillis(dueEpochDay),
+                reminderAt.takeIf { it != -1L },
+                selectedLabelIds,
+            )
+        }
+    }
 
     val context = LocalContext.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -145,7 +168,11 @@ fun TaskComposerSheet(
     val tomorrow9Millis = remember { TaskComposerDefaults.tomorrowAt9Millis() }
 
     val submit: () -> Unit = {
-        if (text.isNotBlank()) {
+        if (isEditing) {
+            keyboard?.hide()
+            persist()
+            onDismiss()
+        } else if (text.isNotBlank()) {
             keyboard?.hide()
             onSubmit(
                 text.trim(),
@@ -160,7 +187,10 @@ fun TaskComposerSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            persist()
+            onDismiss()
+        },
         sheetState = sheetState,
         containerColor = Charcoal,
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
@@ -240,11 +270,17 @@ fun TaskComposerSheet(
                 ) {
                     CategorySelector(
                         bucketChoice = bucketChoice,
-                        onSelect = { bucketChoice = it },
+                        onSelect = {
+                            bucketChoice = it
+                            persist()
+                        },
                     )
                     WhenSelector(
                         dueEpochDay = dueEpochDay,
-                        onPick = { dueEpochDay = it },
+                        onPick = {
+                            dueEpochDay = it
+                            persist()
+                        },
                         onPickDate = { pickerTarget = PickerTarget.DUE_DATE },
                     )
                     RemindSelector(
@@ -253,10 +289,14 @@ fun TaskComposerSheet(
                         tomorrow9Millis = tomorrow9Millis,
                         onSelect = {
                             reminderAt = it
+                            persist()
                             ensureNotificationPermission()
                         },
                         onCustom = { pickerTarget = PickerTarget.REMINDER },
-                        onTurnOff = { reminderAt = -1L },
+                        onTurnOff = {
+                            reminderAt = -1L
+                            persist()
+                        },
                     )
                     LabelSelector(
                         labels = labels,
@@ -267,6 +307,7 @@ fun TaskComposerSheet(
                             } else {
                                 selectedLabelIds + labelId
                             }
+                            persist()
                         },
                         onNewLabel = if (onCreateLabel != null) {
                             { showNewLabelDialog = true }
@@ -280,12 +321,14 @@ fun TaskComposerSheet(
                         .size(40.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(Coral)
-                        .clickable(enabled = text.isNotBlank()) { submit() },
+                        .clickable(enabled = isEditing || text.isNotBlank()) { submit() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.task_add_cd),
+                        imageVector = if (isEditing) Icons.Filled.Check else Icons.Filled.Add,
+                        contentDescription = stringResource(
+                            if (isEditing) R.string.composer_done_cd else R.string.task_add_cd,
+                        ),
                         tint = TextPrimary,
                         modifier = Modifier.size(20.dp),
                     )
@@ -296,21 +339,21 @@ fun TaskComposerSheet(
 
     when (pickerTarget) {
         PickerTarget.DUE_DATE -> {
-            val pickerState = rememberDatePickerState(
-                initialSelectedDateMillis = TaskComposerDefaults.epochDayToDatePickerMillis(dueEpochDay),
-            )
+            val initialMillis = remember {
+                TaskComposerDefaults.epochDayToDatePickerMillis(dueEpochDay)
+            }
+            val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+            LaunchedEffect(pickerState.selectedDateMillis) {
+                val millis = pickerState.selectedDateMillis
+                if (millis != null && millis != initialMillis) {
+                    dueEpochDay = TaskComposerDefaults.datePickerMillisToEpochDay(millis)
+                    persist()
+                    pickerTarget = null
+                }
+            }
             DatePickerDialog(
                 onDismissRequest = { pickerTarget = null },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            pickerState.selectedDateMillis?.let {
-                                dueEpochDay = TaskComposerDefaults.datePickerMillisToEpochDay(it)
-                            }
-                            pickerTarget = null
-                        },
-                    ) { Text(stringResource(R.string.composer_ok)) }
-                },
+                confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { pickerTarget = null }) {
                         Text(stringResource(R.string.composer_cancel))
@@ -321,25 +364,27 @@ fun TaskComposerSheet(
             }
         }
         PickerTarget.REMINDER -> {
-            val pickerState = rememberDatePickerState(
-                initialSelectedDateMillis = TaskComposerDefaults.epochDayToDatePickerMillis(
-                    TaskComposerDefaults.millisToEpochDay(reminderAt),
-                ),
-            )
+            val initialMillis = remember {
+                if (reminderAt == -1L) {
+                    null
+                } else {
+                    TaskComposerDefaults.epochDayToDatePickerMillis(
+                        TaskComposerDefaults.millisToEpochDay(reminderAt),
+                    )
+                }
+            }
+            val pickerState = rememberDatePickerState(initialSelectedDateMillis = initialMillis)
+            LaunchedEffect(pickerState.selectedDateMillis) {
+                val millis = pickerState.selectedDateMillis
+                if (millis != null && millis != initialMillis) {
+                    pendingReminderEpochDay =
+                        TaskComposerDefaults.datePickerMillisToEpochDay(millis)
+                    pickerTarget = null
+                }
+            }
             DatePickerDialog(
                 onDismissRequest = { pickerTarget = null },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            val millis = pickerState.selectedDateMillis
-                            if (millis != null) {
-                                pendingReminderEpochDay =
-                                    TaskComposerDefaults.datePickerMillisToEpochDay(millis)
-                                pickerTarget = null
-                            }
-                        },
-                    ) { Text(stringResource(R.string.composer_ok)) }
-                },
+                confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { pickerTarget = null }) {
                         Text(stringResource(R.string.composer_cancel))
@@ -364,6 +409,7 @@ fun TaskComposerSheet(
                             timeState.hour,
                             timeState.minute,
                         )
+                        persist()
                         pendingReminderEpochDay = -1L
                     },
                 ) { Text(stringResource(R.string.composer_ok)) }
@@ -380,7 +426,14 @@ fun TaskComposerSheet(
 
     if (showNewLabelDialog && onCreateLabel != null) {
         NewLabelDialog(
-            onCreate = { name -> onCreateLabel(name) { id -> if (id != -1L) selectedLabelIds = selectedLabelIds + id } },
+            onCreate = { name ->
+                onCreateLabel(name) { id ->
+                    if (id != -1L) {
+                        selectedLabelIds = selectedLabelIds + id
+                        persist()
+                    }
+                }
+            },
             onDismiss = { showNewLabelDialog = false },
         )
     }
@@ -391,6 +444,14 @@ fun TaskComposerSheet(
             .first()
         focusRequester.requestFocus()
         keyboard?.show()
+    }
+
+    LaunchedEffect(isEditing) {
+        if (!isEditing) return@LaunchedEffect
+        snapshotFlow { text }
+            .drop(1)
+            .debounce(500)
+            .collect { if (it.isNotBlank()) persist() }
     }
 }
 

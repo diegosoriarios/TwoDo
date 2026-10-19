@@ -18,8 +18,12 @@ import com.diego.twodo.ui.theme.TwoDoTheme
 import com.diego.twodo.widget.TasksWidget
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -31,6 +35,7 @@ class EditTaskActivity : ComponentActivity() {
     private var task by mutableStateOf<Task?>(null)
     private var labels by mutableStateOf<List<Label>>(emptyList())
     private var taskLabels by mutableStateOf<List<Label>>(emptyList())
+    private val updateMutex = Mutex()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +48,9 @@ class EditTaskActivity : ComponentActivity() {
                         onDismiss = ::finish,
                         onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
                             saveTask(current.id, title, bucket, dueDate, reminderAt, labelIds)
+                        },
+                        autoSave = { title, bucket, dueDate, reminderAt, labelIds ->
+                            persistTask(current.id, title, bucket, dueDate, reminderAt, labelIds)
                         },
                         labels = labels,
                         onCreateLabel = { name, onCreated ->
@@ -85,6 +93,25 @@ class EditTaskActivity : ComponentActivity() {
         }
     }
 
+    private fun persistTask(
+        taskId: Long,
+        title: String,
+        bucket: TaskBucket?,
+        dueDate: Long?,
+        reminderAt: Long?,
+        labelIds: Set<Long>,
+    ) {
+        if (title.isBlank()) return
+        lifecycleScope.launch {
+            withContext(NonCancellable) {
+                updateMutex.withLock {
+                    taskRepository.updateTaskDetails(taskId, title.trim(), bucket, dueDate, reminderAt, labelIds)
+                    TasksWidget().updateAll(applicationContext)
+                }
+            }
+        }
+    }
+
     private fun saveTask(
         taskId: Long,
         title: String,
@@ -98,8 +125,12 @@ class EditTaskActivity : ComponentActivity() {
             return
         }
         lifecycleScope.launch {
-            taskRepository.updateTaskDetails(taskId, title.trim(), bucket, dueDate, reminderAt, labelIds)
-            TasksWidget().updateAll(applicationContext)
+            withContext(NonCancellable) {
+                updateMutex.withLock {
+                    taskRepository.updateTaskDetails(taskId, title.trim(), bucket, dueDate, reminderAt, labelIds)
+                    TasksWidget().updateAll(applicationContext)
+                }
+            }
             finish()
         }
     }

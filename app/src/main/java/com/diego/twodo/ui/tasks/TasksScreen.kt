@@ -169,9 +169,9 @@ fun TasksScreen(
     tasks.firstOrNull { it.id == editingTaskId }?.let { task ->
         TaskComposerSheet(
             onDismiss = { editingTaskId = null },
-            onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
+            onSubmit = { _, _, _, _, _ -> editingTaskId = null },
+            autoSave = { title, bucket, dueDate, reminderAt, labelIds ->
                 viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt, labelIds)
-                editingTaskId = null
             },
             labels = labels,
             onCreateLabel = viewModel::createLabel,
