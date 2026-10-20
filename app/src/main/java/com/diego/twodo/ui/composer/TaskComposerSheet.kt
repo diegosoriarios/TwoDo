@@ -232,16 +232,11 @@ fun TaskComposerSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            if (isEditing) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            isCompleted = !isCompleted
-                            persist()
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isEditing) {
                     Checkbox(
                         checked = isCompleted,
                         onCheckedChange = {
@@ -255,53 +250,44 @@ fun TaskComposerSheet(
                         ),
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.composer_mark_as_done),
-                        style = TextStyle(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = if (isCompleted) Coral else TextPrimary,
-                        ),
-                    )
                 }
-            }
-
-            BasicTextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 48.dp)
-                    .wrapContentHeight(Alignment.CenterVertically)
-                    .focusRequester(focusRequester),
-                textStyle = TextStyle(
-                    fontSize = 18.sp,
-                    lineHeight = 26.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = TextPrimary,
-                ),
-                cursorBrush = SolidColor(Coral),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = { submit() }),
-                decorationBox = { innerTextField ->
-                    Box(contentAlignment = Alignment.CenterStart) {
-                        if (text.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.task_add_hint),
-                                style = TextStyle(
-                                    fontSize = 18.sp,
-                                    lineHeight = 26.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = TextSecondary,
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                BasicTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier
+                        .weight(1f)
+                        .heightIn(min = 48.dp)
+                        .wrapContentHeight(Alignment.CenterVertically)
+                        .focusRequester(focusRequester),
+                    textStyle = TextStyle(
+                        fontSize = 18.sp,
+                        lineHeight = 26.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = TextPrimary,
+                    ),
+                    cursorBrush = SolidColor(Coral),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = { submit() }),
+                    decorationBox = { innerTextField ->
+                        Box(contentAlignment = Alignment.CenterStart) {
+                            if (text.isEmpty()) {
+                                Text(
+                                    text = stringResource(R.string.task_add_hint),
+                                    style = TextStyle(
+                                        fontSize = 18.sp,
+                                        lineHeight = 26.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = TextSecondary,
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            innerTextField()
                         }
-                        innerTextField()
-                    }
-                },
-            )
+                    },
+                )
+            }
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
