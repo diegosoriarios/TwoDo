@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -111,8 +113,8 @@ private enum class PickerTarget { DUE_DATE, REMINDER }
 @Composable
 fun TaskComposerSheet(
     onDismiss: () -> Unit,
-    onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>) -> Unit,
-    autoSave: ((title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>) -> Unit)? = null,
+    onSubmit: (title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>, isCompleted: Boolean) -> Unit,
+    autoSave: ((title: String, bucket: TaskBucket?, dueDate: Long?, reminderAt: Long?, labelIds: Set<Long>, isCompleted: Boolean) -> Unit)? = null,
     labels: List<Label> = emptyList(),
     onCreateLabel: ((name: String, onCreated: (Long) -> Unit) -> Unit)? = null,
     initialTitle: String = "",
@@ -120,14 +122,22 @@ fun TaskComposerSheet(
     initialDueDate: Long? = null,
     initialReminderAt: Long? = null,
     initialLabelIds: Set<Long> = emptySet(),
+    initialIsCompleted: Boolean = false,
 ) {
     var text by rememberSaveable { mutableStateOf(initialTitle) }
     var bucketChoice by rememberSaveable { mutableStateOf(initialBucket.toBucketChoice()) }
     var dueEpochDay by rememberSaveable {
-        mutableLongStateOf(initialDueDate?.let { TaskComposerDefaults.millisToEpochDay(it) } ?: -1L)
+        mutableLongStateOf(
+            if (autoSave != null) {
+                initialDueDate?.let { TaskComposerDefaults.millisToEpochDay(it) } ?: -1L
+            } else {
+                LocalDate.now().toEpochDay()
+            }
+        )
     }
     var reminderAt by rememberSaveable { mutableLongStateOf(initialReminderAt ?: -1L) }
     var selectedLabelIds by rememberSaveable { mutableStateOf(initialLabelIds) }
+    var isCompleted by rememberSaveable { mutableStateOf(initialIsCompleted) }
     var showNewLabelDialog by rememberSaveable { mutableStateOf(false) }
     var pickerTarget by rememberSaveable { mutableStateOf<PickerTarget?>(null) }
     var pendingReminderEpochDay by rememberSaveable { mutableLongStateOf(-1L) }
@@ -144,6 +154,7 @@ fun TaskComposerSheet(
                 TaskComposerDefaults.epochDayToMillis(dueEpochDay),
                 reminderAt.takeIf { it != -1L },
                 selectedLabelIds,
+                isCompleted,
             )
         }
     }
@@ -180,6 +191,7 @@ fun TaskComposerSheet(
                 TaskComposerDefaults.epochDayToMillis(dueEpochDay),
                 reminderAt.takeIf { it != -1L },
                 selectedLabelIds,
+                isCompleted,
             )
         }
     }
@@ -220,6 +232,40 @@ fun TaskComposerSheet(
                 .padding(bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
+            if (isEditing) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            isCompleted = !isCompleted
+                            persist()
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Checkbox(
+                        checked = isCompleted,
+                        onCheckedChange = {
+                            isCompleted = it
+                            persist()
+                        },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Coral,
+                            uncheckedColor = TextSecondary,
+                            checkmarkColor = TextPrimary,
+                        ),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.composer_mark_as_done),
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isCompleted) Coral else TextPrimary,
+                        ),
+                    )
+                }
+            }
+
             BasicTextField(
                 value = text,
                 onValueChange = { text = it },

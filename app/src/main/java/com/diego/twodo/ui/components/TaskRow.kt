@@ -5,9 +5,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -47,7 +49,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-private val dueDateFormatter = DateTimeFormatter.ofPattern("MMM d")
+private val dueDateFormatter = DateTimeFormatter.ofPattern("d MMM")
 private const val COMPLETION_ANIM_MILLIS = 350
 
 fun List<Task>.sortedForDisplay(): List<Task> =
@@ -84,89 +86,95 @@ fun TaskRow(
         }
     }
 
-    Row(
+    Column(
         modifier = modifier
             .alpha(rowAlpha)
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(4.dp))
             .background(SurfaceDark)
             .clickable(enabled = !completing) { onEdit(task) }
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     ) {
-        SquareCheckbox(
-            checked = task.isCompleted || completing,
-            onCheckedChange = {
-                if (completing) return@SquareCheckbox
-                if (task.isCompleted) {
-                    onToggle(task.id, false)
-                } else {
-                    completing = true
-                }
-            },
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = task.title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = if (task.isCompleted) TextSecondary else MaterialTheme.colorScheme.onSurface,
-            textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .weight(1f)
-                .padding(vertical = 10.dp),
-        )
-        if (labels.isNotEmpty()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SquareCheckbox(
+                checked = task.isCompleted || completing,
+                onCheckedChange = {
+                    if (completing) return@SquareCheckbox
+                    if (task.isCompleted) {
+                        onToggle(task.id, false)
+                    } else {
+                        completing = true
+                    }
+                },
+            )
+            Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = labels.joinToString(" ") { "#${it.name}" },
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
+                text = task.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (task.isCompleted) TextSecondary else MaterialTheme.colorScheme.onSurface,
+                textDecoration = if (task.isCompleted) TextDecoration.LineThrough else null,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            if (labels.isNotEmpty()) {
+                Text(
+                    text = labels.joinToString(" ") { "#${it.name}" },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Box {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    enabled = !completing,
+                    modifier = Modifier.size(28.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = stringResource(R.string.task_more_cd),
+                        tint = TextSecondary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.task_edit)) },
+                        onClick = {
+                            menuExpanded = false
+                            onEdit(task)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.task_delete)) },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete(task.id)
+                        },
+                    )
+                }
+            }
         }
         if (task.dueDate != null) {
-            Text(
-                text = Instant.ofEpochMilli(task.dueDate).atZone(ZoneId.systemDefault())
-                    .format(dueDateFormatter),
-                style = MaterialTheme.typography.bodySmall,
-                color = Coral,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-        Box {
-            IconButton(
-                onClick = { menuExpanded = true },
-                enabled = !completing,
-                modifier = Modifier.size(28.dp),
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.MoreVert,
-                    contentDescription = stringResource(R.string.task_more_cd),
-                    tint = TextSecondary,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-            DropdownMenu(
-                expanded = menuExpanded,
-                onDismissRequest = { menuExpanded = false },
-            ) {
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.task_edit)) },
-                    onClick = {
-                        menuExpanded = false
-                        onEdit(task)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.task_delete)) },
-                    onClick = {
-                        menuExpanded = false
-                        onDelete(task.id)
-                    },
+                Spacer(modifier = Modifier.width(30.dp))
+                Text(
+                    text = Instant.ofEpochMilli(task.dueDate).atZone(ZoneId.systemDefault())
+                        .format(dueDateFormatter),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Coral,
                 )
             }
         }

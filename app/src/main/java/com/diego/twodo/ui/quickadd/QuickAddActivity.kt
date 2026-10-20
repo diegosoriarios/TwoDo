@@ -61,6 +61,7 @@ class QuickAddActivity : ComponentActivity() {
         dueDate: Long?,
         reminderAt: Long?,
         labelIds: Set<Long>,
+        isCompleted: Boolean,
     ) {
         if (title.isBlank()) {
             finish()

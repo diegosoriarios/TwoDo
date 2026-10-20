@@ -116,9 +116,9 @@ fun CalendarScreen(
     (tasks + completedTasks).firstOrNull { it.id == editingTaskId }?.let { task ->
         TaskComposerSheet(
             onDismiss = { editingTaskId = null },
-            onSubmit = { _, _, _, _, _ -> editingTaskId = null },
-            autoSave = { title, bucket, dueDate, reminderAt, labelIds ->
-                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt, labelIds)
+            onSubmit = { _, _, _, _, _, _ -> editingTaskId = null },
+            autoSave = { title, bucket, dueDate, reminderAt, labelIds, isCompleted ->
+                viewModel.updateTask(task.id, title, bucket, dueDate, reminderAt, labelIds, isCompleted)
             },
             labels = labels,
             onCreateLabel = viewModel::createLabel,
@@ -127,6 +127,7 @@ fun CalendarScreen(
             initialDueDate = task.dueDate,
             initialReminderAt = task.reminderAt,
             initialLabelIds = taskLabelMap[task.id].orEmpty().map { it.id }.toSet(),
+            initialIsCompleted = task.isCompleted,
         )
     }
 

@@ -96,6 +96,7 @@
     <string name="composer_ok">OK</string>
     <string name="composer_cancel">Cancelar</string>
     <string name="composer_done_cd">Concluir edição</string>
+    <string name="composer_mark_as_done">Marcar como concluída</string>
 
     <string name="notification_channel_name">Lembretes de tarefas</string>
     <string name="notification_channel_description">Notificações que lembram você sobre tarefas</string>

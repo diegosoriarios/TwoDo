@@ -46,11 +46,11 @@ class EditTaskActivity : ComponentActivity() {
                 task?.let { current ->
                     TaskComposerSheet(
                         onDismiss = ::finish,
-                        onSubmit = { title, bucket, dueDate, reminderAt, labelIds ->
+                        onSubmit = { title, bucket, dueDate, reminderAt, labelIds, _ ->
                             saveTask(current.id, title, bucket, dueDate, reminderAt, labelIds)
                         },
-                        autoSave = { title, bucket, dueDate, reminderAt, labelIds ->
-                            persistTask(current.id, title, bucket, dueDate, reminderAt, labelIds)
+                        autoSave = { title, bucket, dueDate, reminderAt, labelIds, isCompleted ->
+                            persistTask(current.id, title, bucket, dueDate, reminderAt, labelIds, isCompleted)
                         },
                         labels = labels,
                         onCreateLabel = { name, onCreated ->
@@ -64,6 +64,7 @@ class EditTaskActivity : ComponentActivity() {
                         initialDueDate = current.dueDate,
                         initialReminderAt = current.reminderAt,
                         initialLabelIds = taskLabels.map { it.id }.toSet(),
+                        initialIsCompleted = current.isCompleted,
                     )
                 }
             }
@@ -100,12 +101,17 @@ class EditTaskActivity : ComponentActivity() {
         dueDate: Long?,
         reminderAt: Long?,
         labelIds: Set<Long>,
+        isCompleted: Boolean,
     ) {
         if (title.isBlank()) return
         lifecycleScope.launch {
             withContext(NonCancellable) {
                 updateMutex.withLock {
                     taskRepository.updateTaskDetails(taskId, title.trim(), bucket, dueDate, reminderAt, labelIds)
+                    val currentTask = taskRepository.getTaskByIdSync(taskId)
+                    if (currentTask != null && currentTask.isCompleted != isCompleted) {
+                        taskRepository.toggleTaskCompletion(taskId, isCompleted)
+                    }
                     TasksWidget().updateAll(applicationContext)
                 }
             }

@@ -46,6 +46,9 @@ import com.diego.twodo.domain.model.Task
 import com.diego.twodo.ui.quickadd.EditTaskActivity
 import com.diego.twodo.ui.quickadd.QuickAddActivity
 import kotlinx.coroutines.flow.first
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private val WidgetBackground = ColorProvider(Color(0xFF121212))
 private val WidgetSurface = ColorProvider(Color(0xFF252525))
@@ -54,6 +57,8 @@ private val WidgetTextPrimary = ColorProvider(Color(0xFFFFFFFF))
 private val WidgetTextSecondary = ColorProvider(Color(0xFFA0A0A0))
 private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
 private val WidgetWhite = ColorProvider(Color(0xFFFFFFFF))
+
+private val widgetDateFormatter = DateTimeFormatter.ofPattern("d MMM")
 
 private data class WidgetStrings(
     val appName: String,
@@ -75,7 +80,7 @@ class TasksWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
-        val tasks = taskRepository.getActiveTasks().first()
+        val tasks = taskRepository.getActiveTasksSync()
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         provideContent {
             val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
@@ -221,30 +226,47 @@ class TasksWidget : GlanceAppWidget() {
         val editAction = actionStartActivity<EditTaskActivity>(
             parameters = actionParametersOf(KEY_EDIT_TASK_ID to task.id),
         )
-        Row(
+        Column(
             modifier = GlanceModifier
                 .fillMaxWidth()
-                .height(40.dp)
                 .cornerRadius(4.dp)
                 .background(WidgetSurface)
                 .clickable(editAction)
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
-            Image(
-                provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
-                contentDescription = checkCd,
-                modifier = GlanceModifier
-                    .size(18.dp)
-                    .clickable(toggleAction),
-            )
-            Spacer(modifier = GlanceModifier.width(12.dp))
-            Text(
-                text = task.title,
-                style = TextStyle(fontSize = 14.sp, color = WidgetTextPrimary),
-                maxLines = 1,
-                modifier = GlanceModifier.defaultWeight(),
-            )
+            Row(
+                modifier = GlanceModifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
+                    contentDescription = checkCd,
+                    modifier = GlanceModifier
+                        .size(18.dp)
+                        .clickable(toggleAction),
+                )
+                Spacer(modifier = GlanceModifier.width(12.dp))
+                Text(
+                    text = task.title,
+                    style = TextStyle(fontSize = 14.sp, color = WidgetTextPrimary),
+                    maxLines = 1,
+                    modifier = GlanceModifier.defaultWeight(),
+                )
+            }
+            if (task.dueDate != null) {
+                Spacer(modifier = GlanceModifier.height(4.dp))
+                Row(
+                    modifier = GlanceModifier.fillMaxWidth(),
+                ) {
+                    Spacer(modifier = GlanceModifier.width(30.dp))
+                    Text(
+                        text = Instant.ofEpochMilli(task.dueDate).atZone(ZoneId.systemDefault())
+                            .format(widgetDateFormatter),
+                        style = TextStyle(fontSize = 12.sp, color = WidgetCoral),
+                        maxLines = 1,
+                    )
+                }
+            }
         }
     }
 }

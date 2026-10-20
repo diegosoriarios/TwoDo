@@ -85,11 +85,16 @@ class TasksViewModel @Inject constructor(
         dueDate: Long?,
         reminderAt: Long?,
         labelIds: Set<Long>,
+        isCompleted: Boolean,
     ) {
         if (title.isBlank()) return
         viewModelScope.launch {
             updateMutex.withLock {
                 taskRepository.updateTaskDetails(id, title.trim(), bucket, dueDate, reminderAt, labelIds)
+                val currentTask = taskRepository.getTaskByIdSync(id)
+                if (currentTask != null && currentTask.isCompleted != isCompleted) {
+                    taskRepository.toggleTaskCompletion(id, isCompleted)
+                }
                 TasksWidget().updateAll(context)
             }
         }
