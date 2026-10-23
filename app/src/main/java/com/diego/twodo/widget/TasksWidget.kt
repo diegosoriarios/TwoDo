@@ -154,7 +154,7 @@ class TasksWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                provider = ImageProvider(R.drawable.ic_logo),
+                provider = ImageProvider(R.drawable.ic_twodo_logo),
                 contentDescription = strings.openAppCd,
                 modifier = GlanceModifier
                     .size(20.dp)
