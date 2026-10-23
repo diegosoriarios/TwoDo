@@ -9,9 +9,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.glance.appwidget.updateAll
+import androidx.lifecycle.lifecycleScope
 import com.diego.twodo.ui.TwoDoApp
 import com.diego.twodo.ui.theme.TwoDoTheme
+import com.diego.twodo.widget.TasksWidget
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -23,6 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         focusQuickAdd = intent.getBooleanExtra(EXTRA_QUICK_ADD, false)
+        lifecycleScope.launch { TasksWidget().updateAll(this@MainActivity) }
         setContent {
             TwoDoTheme {
                 TwoDoApp(

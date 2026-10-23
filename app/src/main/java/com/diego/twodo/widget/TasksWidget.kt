@@ -1,11 +1,13 @@
 package com.diego.twodo.widget
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.PorterDuff
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.Image
@@ -40,6 +42,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
+import androidx.core.content.res.ResourcesCompat
 import com.diego.twodo.MainActivity
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
@@ -49,6 +52,8 @@ import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import kotlin.math.max
+import kotlin.math.roundToInt
 
 private val WidgetBackground = ColorProvider(Color(0xFF121212))
 private val WidgetSurface = ColorProvider(Color(0xFF252525))
@@ -56,9 +61,32 @@ private val WidgetHeaderBar = ColorProvider(Color(0xFF2E2E2E))
 private val WidgetTextPrimary = ColorProvider(Color(0xFFFFFFFF))
 private val WidgetTextSecondary = ColorProvider(Color(0xFFA0A0A0))
 private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
-private val WidgetWhite = ColorProvider(Color(0xFFFFFFFF))
 
 private val widgetDateFormatter = DateTimeFormatter.ofPattern("d MMM")
+
+private data class WidgetIcons(
+    val logo: Bitmap,
+    val add: Bitmap,
+    val checkbox: Bitmap,
+)
+
+private fun Context.widgetIcons(): WidgetIcons = WidgetIcons(
+    logo = iconBitmap(R.drawable.ic_twodo_logo, sizeDp = 20),
+    add = iconBitmap(R.drawable.ic_add, sizeDp = 18, tint = 0xFFFFFFFF.toInt()),
+    checkbox = iconBitmap(R.drawable.ic_checkbox_unchecked, sizeDp = 18),
+)
+
+private fun Context.iconBitmap(resId: Int, sizeDp: Int, tint: Int? = null): Bitmap {
+    val drawable = ResourcesCompat.getDrawable(resources, resId, null)
+        ?: error("Missing drawable resource 0x${resId.toString(16)}")
+    val sizePx = max(1, (sizeDp * resources.displayMetrics.density).roundToInt())
+    val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    if (tint != null) drawable.setColorFilter(tint, PorterDuff.Mode.SRC_IN)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return bitmap
+}
 
 private data class WidgetStrings(
     val appName: String,
@@ -82,6 +110,7 @@ class TasksWidget : GlanceAppWidget() {
         val taskRepository = widgetTaskRepository(context)
         val tasks = taskRepository.getActiveTasksSync()
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
+        val icons = context.widgetIcons()
         provideContent {
             val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
             val sorted = filter.apply(tasks)
@@ -98,7 +127,7 @@ class TasksWidget : GlanceAppWidget() {
                 checkCd = context.getString(R.string.widget_check_cd),
                 openAppCd = context.getString(R.string.widget_open_app_cd),
             )
-            TasksWidgetContent(sorted, strings, appWidgetId, filter)
+            TasksWidgetContent(sorted, strings, appWidgetId, filter, icons)
         }
     }
 
@@ -108,6 +137,7 @@ class TasksWidget : GlanceAppWidget() {
         strings: WidgetStrings,
         appWidgetId: Int,
         filter: WidgetFilter,
+        icons: WidgetIcons,
     ) {
         Column(
             modifier = GlanceModifier
@@ -115,7 +145,7 @@ class TasksWidget : GlanceAppWidget() {
                 .background(WidgetBackground)
                 .cornerRadius(16.dp),
         ) {
-            WidgetHeader(strings, appWidgetId, filter)
+            WidgetHeader(strings, appWidgetId, filter, icons)
             Box(
                 modifier = GlanceModifier
                     .fillMaxWidth()
@@ -128,7 +158,7 @@ class TasksWidget : GlanceAppWidget() {
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
                         items(tasks) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
-                                TaskRow(task, strings.checkCd)
+                                TaskRow(task, icons.checkbox, strings.checkCd)
                             }
                         }
                     }
@@ -138,7 +168,12 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun WidgetHeader(strings: WidgetStrings, appWidgetId: Int, filter: WidgetFilter) {
+    private fun WidgetHeader(
+        strings: WidgetStrings,
+        appWidgetId: Int,
+        filter: WidgetFilter,
+        icons: WidgetIcons,
+    ) {
         val filterAction = actionStartActivity<FilterPickerActivity>(
             parameters = actionParametersOf(
                 KEY_FILTER_APP_WIDGET_ID to appWidgetId,
@@ -154,7 +189,7 @@ class TasksWidget : GlanceAppWidget() {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Image(
-                provider = ImageProvider(R.drawable.ic_twodo_logo),
+                provider = ImageProvider(icons.logo),
                 contentDescription = strings.openAppCd,
                 modifier = GlanceModifier
                     .size(20.dp)
@@ -192,10 +227,9 @@ class TasksWidget : GlanceAppWidget() {
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    provider = ImageProvider(R.drawable.ic_add),
+                    provider = ImageProvider(icons.add),
                     contentDescription = strings.addTaskCd,
                     modifier = GlanceModifier.size(18.dp),
-                    colorFilter = ColorFilter.tint(WidgetWhite),
                 )
             }
         }
@@ -219,7 +253,7 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun TaskRow(task: Task, checkCd: String) {
+    private fun TaskRow(task: Task, checkbox: Bitmap, checkCd: String) {
         val toggleAction = actionRunCallback<ToggleTaskAction>(
             parameters = actionParametersOf(ToggleTaskAction.KEY_TASK_ID to task.id),
         )
@@ -239,7 +273,7 @@ class TasksWidget : GlanceAppWidget() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    provider = ImageProvider(R.drawable.ic_checkbox_unchecked),
+                    provider = ImageProvider(checkbox),
                     contentDescription = checkCd,
                     modifier = GlanceModifier
                         .size(18.dp)
