@@ -56,6 +56,15 @@
             android:theme="@style/Theme.TwoDo.QuickAdd"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity
+            android:name=".widget.WidgetToggleTrampolineActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.TwoDo.Trampoline" />
+
         <receiver
             android:name=".widget.LauncherUpdateReceiver"
             android:exported="true">

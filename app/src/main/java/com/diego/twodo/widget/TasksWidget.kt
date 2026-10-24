@@ -19,7 +19,6 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
 import androidx.glance.appwidget.lazy.items
@@ -254,8 +253,10 @@ class TasksWidget : GlanceAppWidget() {
 
     @Composable
     private fun TaskRow(task: Task, checkbox: Bitmap, checkCd: String) {
-        val toggleAction = actionRunCallback<ToggleTaskAction>(
-            parameters = actionParametersOf(ToggleTaskAction.KEY_TASK_ID to task.id),
+        val toggleAction = actionStartActivity<WidgetToggleTrampolineActivity>(
+            parameters = actionParametersOf(
+                WidgetToggleTrampolineActivity.KEY_TASK_ID to task.id,
+            ),
         )
         val editAction = actionStartActivity<EditTaskActivity>(
             parameters = actionParametersOf(KEY_EDIT_TASK_ID to task.id),
