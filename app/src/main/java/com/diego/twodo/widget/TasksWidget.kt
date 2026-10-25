@@ -67,7 +67,6 @@ private val widgetDateFormatter = DateTimeFormatter.ofPattern("d MMM")
 
 private const val WIDGET_LOG_TAG = "TwoDoWidget"
 private const val COMPLETED_FEEDBACK_TTL_MS = 5_000L
-private const val MAX_WIDGET_ROWS = 15
 
 private data class WidgetIcons(
     val logo: Bitmap,
@@ -170,17 +169,13 @@ class TasksWidget : GlanceAppWidget() {
                 if (tasks.isEmpty() && recentlyCompleted.isEmpty()) {
                     EmptyState(strings.emptyTitle)
                 } else {
-                    val visibleActive = tasks.take(MAX_WIDGET_ROWS)
-                    val visibleCompleted = recentlyCompleted.take(
-                        (MAX_WIDGET_ROWS - visibleActive.size).coerceAtLeast(0),
-                    )
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                        items(visibleActive) { task ->
+                        items(tasks) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
                                 TaskRow(task, icons, isCompleted = false, checkCd = strings.checkCd)
                             }
                         }
-                        items(visibleCompleted) { task ->
+                        items(recentlyCompleted) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
                                 TaskRow(task, icons, isCompleted = true, checkCd = strings.checkCd)
                             }
