@@ -2,11 +2,13 @@ package com.diego.twodo.widget
 
 import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.updateAll
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class WidgetToggleTrampolineActivity : Activity() {
@@ -22,8 +24,13 @@ class WidgetToggleTrampolineActivity : Activity() {
         }
         scope.launch {
             try {
-                widgetTaskRepository(this@WidgetToggleTrampolineActivity)
-                    .toggleTaskCompletion(taskId, true)
+                val repository = widgetTaskRepository(this@WidgetToggleTrampolineActivity)
+                val task = repository.getTaskByIdSync(taskId) ?: return@launch
+                val target = !task.isCompleted
+                Log.d(WIDGET_LOG_TAG, "toggle taskId=$taskId -> isCompleted=$target")
+                repository.toggleTaskCompletion(taskId, target)
+                TasksWidget().updateAll(applicationContext)
+                delay(CHECKED_FEEDBACK_MS)
                 TasksWidget().updateAll(applicationContext)
             } finally {
                 finish()
@@ -34,5 +41,7 @@ class WidgetToggleTrampolineActivity : Activity() {
     companion object {
         const val EXTRA_TASK_ID = "com.diego.twodo.widget.extra.TASK_ID"
         val KEY_TASK_ID = ActionParameters.Key<Long>(EXTRA_TASK_ID)
+        private const val CHECKED_FEEDBACK_MS = 2_000L
+        private const val WIDGET_LOG_TAG = "TwoDoWidget"
     }
 }

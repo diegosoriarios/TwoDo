@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.PorterDuff
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,6 +39,7 @@ import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import androidx.compose.ui.graphics.Color
@@ -63,16 +65,22 @@ private val WidgetCoral = ColorProvider(Color(0xFFD35D47))
 
 private val widgetDateFormatter = DateTimeFormatter.ofPattern("d MMM")
 
+private const val WIDGET_LOG_TAG = "TwoDoWidget"
+private const val COMPLETED_FEEDBACK_TTL_MS = 5_000L
+private const val MAX_WIDGET_ROWS = 15
+
 private data class WidgetIcons(
     val logo: Bitmap,
     val add: Bitmap,
     val checkbox: Bitmap,
+    val checked: Bitmap,
 )
 
 private fun Context.widgetIcons(): WidgetIcons = WidgetIcons(
     logo = iconBitmap(R.drawable.ic_twodo_logo, sizeDp = 20),
     add = iconBitmap(R.drawable.ic_add, sizeDp = 18, tint = 0xFFFFFFFF.toInt()),
     checkbox = iconBitmap(R.drawable.ic_checkbox_unchecked, sizeDp = 18),
+    checked = iconBitmap(R.drawable.ic_checkbox_checked, sizeDp = 18),
 )
 
 private fun Context.iconBitmap(resId: Int, sizeDp: Int, tint: Int? = null): Bitmap {
@@ -108,6 +116,13 @@ class TasksWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
         val tasks = taskRepository.getActiveTasksSync()
+        val recentlyCompleted = taskRepository.getCompletedSinceSync(
+            System.currentTimeMillis() - COMPLETED_FEEDBACK_TTL_MS,
+        )
+        Log.d(
+            WIDGET_LOG_TAG,
+            "compose: active=${tasks.size} recentCompleted=${recentlyCompleted.size}",
+        )
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         val icons = context.widgetIcons()
         provideContent {
@@ -126,13 +141,14 @@ class TasksWidget : GlanceAppWidget() {
                 checkCd = context.getString(R.string.widget_check_cd),
                 openAppCd = context.getString(R.string.widget_open_app_cd),
             )
-            TasksWidgetContent(sorted, strings, appWidgetId, filter, icons)
+            TasksWidgetContent(sorted, recentlyCompleted, strings, appWidgetId, filter, icons)
         }
     }
 
     @Composable
     private fun TasksWidgetContent(
         tasks: List<Task>,
+        recentlyCompleted: List<Task>,
         strings: WidgetStrings,
         appWidgetId: Int,
         filter: WidgetFilter,
@@ -151,13 +167,22 @@ class TasksWidget : GlanceAppWidget() {
                     .defaultWeight()
                     .padding(12.dp),
             ) {
-                if (tasks.isEmpty()) {
+                if (tasks.isEmpty() && recentlyCompleted.isEmpty()) {
                     EmptyState(strings.emptyTitle)
                 } else {
+                    val visibleActive = tasks.take(MAX_WIDGET_ROWS)
+                    val visibleCompleted = recentlyCompleted.take(
+                        (MAX_WIDGET_ROWS - visibleActive.size).coerceAtLeast(0),
+                    )
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                        items(tasks) { task ->
+                        items(visibleActive) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
-                                TaskRow(task, icons.checkbox, strings.checkCd)
+                                TaskRow(task, icons, isCompleted = false, checkCd = strings.checkCd)
+                            }
+                        }
+                        items(visibleCompleted) { task ->
+                            Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
+                                TaskRow(task, icons, isCompleted = true, checkCd = strings.checkCd)
                             }
                         }
                     }
@@ -252,7 +277,12 @@ class TasksWidget : GlanceAppWidget() {
     }
 
     @Composable
-    private fun TaskRow(task: Task, checkbox: Bitmap, checkCd: String) {
+    private fun TaskRow(
+        task: Task,
+        icons: WidgetIcons,
+        isCompleted: Boolean,
+        checkCd: String,
+    ) {
         val toggleAction = actionStartActivity<WidgetToggleTrampolineActivity>(
             parameters = actionParametersOf(
                 WidgetToggleTrampolineActivity.KEY_TASK_ID to task.id,
@@ -274,7 +304,7 @@ class TasksWidget : GlanceAppWidget() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Image(
-                    provider = ImageProvider(checkbox),
+                    provider = ImageProvider(if (isCompleted) icons.checked else icons.checkbox),
                     contentDescription = checkCd,
                     modifier = GlanceModifier
                         .size(18.dp)
@@ -283,12 +313,16 @@ class TasksWidget : GlanceAppWidget() {
                 Spacer(modifier = GlanceModifier.width(12.dp))
                 Text(
                     text = task.title,
-                    style = TextStyle(fontSize = 14.sp, color = WidgetTextPrimary),
+                    style = TextStyle(
+                        fontSize = 14.sp,
+                        color = if (isCompleted) WidgetTextSecondary else WidgetTextPrimary,
+                        textDecoration = if (isCompleted) TextDecoration.LineThrough else null,
+                    ),
                     maxLines = 1,
                     modifier = GlanceModifier.defaultWeight(),
                 )
             }
-            if (task.dueDate != null) {
+            if (task.dueDate != null && !isCompleted) {
                 Spacer(modifier = GlanceModifier.height(4.dp))
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),

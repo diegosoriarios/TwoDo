@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 interface TaskRepository {
     fun getActiveTasks(): Flow<List<Task>>
     suspend fun getActiveTasksSync(): List<Task>
+    suspend fun getCompletedSinceSync(since: Long): List<Task>
     fun getCompletedTasks(): Flow<List<Task>>
     fun getLabels(): Flow<List<Label>>
     fun getTaskLabelMap(): Flow<Map<Long, List<Label>>>
