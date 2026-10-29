@@ -20,8 +20,8 @@ android {
         applicationId = "com.diego.twodo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.5.0"
+        versionCode = 3
+        versionName = "0.5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,7 +39,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            ndk {
+                abiFilters.clear()
+                abiFilters.add("arm64-v8a")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

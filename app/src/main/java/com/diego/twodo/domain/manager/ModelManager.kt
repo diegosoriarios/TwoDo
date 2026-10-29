@@ -112,7 +112,6 @@ class ModelManager @Inject constructor(
         val networkType = if (requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(networkType)
-            .setRequiresBatteryNotLow(true)
             .build()
 
         val inputData = Data.Builder()

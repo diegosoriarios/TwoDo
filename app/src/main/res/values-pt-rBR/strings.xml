@@ -129,12 +129,13 @@
     <string name="model_manager_status_ready">Modelo pronto</string>
     <string name="model_manager_status_error">Falha no download</string>
     <string name="model_manager_not_downloaded_description">Baixe o modelo uma vez para o Two.do refinar tarefas ambíguas inteiramente neste dispositivo.</string>
-    <string name="model_manager_waiting_description">O download começará quando o Wi-Fi e as condições do dispositivo permitirem.</string>
+    <string name="model_manager_waiting_description">O download começará quando houver Wi-Fi não limitado. Se seu Wi-Fi for limitado, use qualquer rede.</string>
     <string name="model_manager_progress_format">%1$d%% concluído</string>
     <string name="model_manager_ready_description">O modelo no dispositivo está pronto. Tarefas ambíguas são refinadas em segundo plano.</string>
     <string name="model_manager_error_format">Erro: %1$s</string>
     <string name="model_manager_download_wifi">Baixar por Wi-Fi</string>
     <string name="model_manager_download_mobile">Usar dados móveis</string>
+    <string name="model_manager_use_any_network">Usar qualquer rede</string>
     <string name="model_manager_resume_wifi">Retomar por Wi-Fi</string>
     <string name="model_manager_resume_mobile">Retomar por dados móveis</string>
     <string name="model_manager_pause">Pausar download</string>

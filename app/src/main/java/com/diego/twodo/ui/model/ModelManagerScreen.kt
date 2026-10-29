@@ -277,7 +277,7 @@ private fun StatusSection(
                 style = TypeTokens.Body,
             )
             TextButton(
-                text = stringResource(R.string.model_manager_download_mobile),
+                text = stringResource(R.string.model_manager_use_any_network),
                 onClick = onDownloadMobile,
             )
             TextButton(

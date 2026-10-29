@@ -58,6 +58,7 @@ The setup screen offers a one-time model download backed by **WorkManager**:
 - Foreground-service downloads with progress notification, storage checks, backoff, and automatic retry.
 - A dedicated **AI model** screen in the task-list overflow menu supports download, pause, resume, retry, and delete.
 - **Low-RAM and 32-bit devices** gracefully fall back to the instant rules engine.
+- Release APKs target **arm64-v8a**; debug builds also include x86_64 for emulators.
 
 The default model is [Qwen3 0.6B dynamic INT4 (LiteRT Community)](https://huggingface.co/litert-community/Qwen3-0.6B):
 about 329 MB, ungated, supports Range requests for resume, and runs fully offline.

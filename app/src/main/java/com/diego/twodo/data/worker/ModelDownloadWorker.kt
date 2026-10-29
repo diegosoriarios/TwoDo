@@ -1,6 +1,8 @@
 package com.diego.twodo.data.worker
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.StatFs
 import android.util.Log
 import androidx.work.CoroutineWorker
@@ -147,12 +149,17 @@ class ModelDownloadWorker(
 
     private suspend fun publishForeground(progress: Int?) {
         try {
-            setForeground(
+            val notification = ModelDownloadNotification.build(applicationContext, progress)
+            val foregroundInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 ForegroundInfo(
                     ModelDownloadNotification.NOTIFICATION_ID,
-                    ModelDownloadNotification.build(applicationContext, progress),
-                ),
-            )
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+                )
+            } else {
+                ForegroundInfo(ModelDownloadNotification.NOTIFICATION_ID, notification)
+            }
+            setForeground(foregroundInfo)
         } catch (throwable: Throwable) {
             Log.w(TAG, "Unable to publish download foreground notification", throwable)
         }
