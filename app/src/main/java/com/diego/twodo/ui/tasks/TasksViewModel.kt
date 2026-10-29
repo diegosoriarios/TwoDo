@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.diego.twodo.domain.manager.ModelManager
 import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.ModelStatus
+import com.diego.twodo.domain.model.ReevaluationSummary
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.domain.repository.ClassificationRepository
@@ -14,13 +15,29 @@ import com.diego.twodo.widget.TasksWidget
 import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
+
+sealed interface ReevaluationFeedback {
+    data class TaskResult(
+        val newBucket: TaskBucket?,
+        val changed: Boolean,
+    ) : ReevaluationFeedback
+
+    data class AllResult(
+        val summary: ReevaluationSummary,
+    ) : ReevaluationFeedback
+}
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
@@ -44,18 +61,16 @@ class TasksViewModel @Inject constructor(
 
     val modelStatus: StateFlow<ModelStatus> = modelManager.modelStatus
 
-    val canUseLlm: Boolean
-        get() = modelManager.canUseLlm()
+    val canUseLlm: StateFlow<Boolean> = modelManager.canUseLlm
 
     private val updateMutex = Mutex()
 
-    init {
-        viewModelScope.launch {
-            if (modelManager.canUseLlm()) {
-                classificationRepository.processUnclassifiedQueue()
-            }
-        }
-    }
+    private val _isReevaluating = MutableStateFlow(false)
+    val isReevaluating: StateFlow<Boolean> = _isReevaluating.asStateFlow()
+
+    private val _reevaluationFeedback =
+        MutableSharedFlow<ReevaluationFeedback>(extraBufferCapacity = 1)
+    val reevaluationFeedback: SharedFlow<ReevaluationFeedback> = _reevaluationFeedback.asSharedFlow()
 
     fun addTask(
         title: String,
@@ -111,6 +126,46 @@ class TasksViewModel @Inject constructor(
         viewModelScope.launch {
             taskRepository.deleteTaskById(id)
             TasksWidget().updateAll(context)
+        }
+    }
+
+    fun reevaluateTask(id: Long) {
+        viewModelScope.launch {
+            updateMutex.withLock {
+                val outcome = classificationRepository.reevaluateTask(id)
+                if (outcome?.changed == true) {
+                    TasksWidget().updateAll(context)
+                }
+                _reevaluationFeedback.emit(
+                    outcome?.let {
+                        ReevaluationFeedback.TaskResult(
+                            newBucket = it.newBucket,
+                            changed = it.changed,
+                        )
+                    } ?: ReevaluationFeedback.TaskResult(
+                        newBucket = null,
+                        changed = false,
+                    )
+                )
+            }
+        }
+    }
+
+    fun reevaluateAll() {
+        if (_isReevaluating.value) return
+        _isReevaluating.value = true
+        viewModelScope.launch {
+            try {
+                updateMutex.withLock {
+                    val summary = classificationRepository.reevaluateActiveTasks()
+                    if (summary.updated > 0) {
+                        TasksWidget().updateAll(context)
+                    }
+                    _reevaluationFeedback.emit(ReevaluationFeedback.AllResult(summary))
+                }
+            } finally {
+                _isReevaluating.value = false
+            }
         }
     }
 }

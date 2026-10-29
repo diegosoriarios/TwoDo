@@ -2,6 +2,8 @@ package com.diego.twodo.domain.manager
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Build
+import android.util.Log
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.Data
@@ -12,31 +14,45 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.diego.twodo.data.classifier.LocalLlmClassifier
 import com.diego.twodo.data.worker.ModelDownloadWorker
+import com.diego.twodo.domain.model.ModelSpec
 import com.diego.twodo.domain.model.ModelStatus
+import com.diego.twodo.domain.repository.ClassificationScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.io.File
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import javax.inject.Singleton
 
 @Singleton
 class ModelManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val localLlmClassifier: LocalLlmClassifier,
+    private val classificationScheduler: ClassificationScheduler,
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val workManager = WorkManager.getInstance(context)
+    private val warmUpInProgress = AtomicBoolean(false)
 
     private val _modelStatus = MutableStateFlow<ModelStatus>(ModelStatus.NotDownloaded)
     val modelStatus: StateFlow<ModelStatus> = _modelStatus.asStateFlow()
+
+    private val _runtimeFailed = MutableStateFlow(false)
+    val runtimeFailed: StateFlow<Boolean> = _runtimeFailed.asStateFlow()
+
+    private val _partialDownload = MutableStateFlow(false)
+    val partialDownload: StateFlow<Boolean> = _partialDownload.asStateFlow()
 
     init {
         checkInitialStatus()
@@ -48,37 +64,60 @@ class ModelManager @Inject constructor(
             val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
             val memoryInfo = ActivityManager.MemoryInfo()
             activityManager.getMemoryInfo(memoryInfo)
-            memoryInfo.lowMemory || (memoryInfo.totalMem < LOW_RAM_THRESHOLD_BYTES)
+            activityManager.isLowRamDevice ||
+                memoryInfo.lowMemory ||
+                (memoryInfo.totalMem < LOW_RAM_THRESHOLD_BYTES)
         } catch (e: Exception) {
             false
         }
     }
 
-    fun getModelFile(): File {
-        val modelsDir = File(context.filesDir, "models")
-        return File(modelsDir, ModelDownloadWorker.MODEL_FILE_NAME)
-    }
+    /** LiteRT-LM only ships arm64-v8a and x86_64 native libraries. */
+    fun isDeviceSupported(): Boolean =
+        Build.SUPPORTED_ABIS.any { it == "arm64-v8a" || it == "x86_64" }
 
-    private fun getPartialModelFile(): File {
-        val modelsDir = File(context.filesDir, "models")
-        return File(modelsDir, "${ModelDownloadWorker.MODEL_FILE_NAME}.tmp")
-    }
+    fun getModelFile(): File = File(modelsDirectory(), ModelSpec.FILE_NAME)
 
-    /** Whether the local LLM can run on this device; low-RAM devices gracefully fall back to heuristics. */
-    fun canUseLlm(): Boolean = _modelStatus.value is ModelStatus.Ready && !isLowRamDevice()
+    fun getPartialModelFile(): File = File(modelsDirectory(), "${ModelSpec.FILE_NAME}.tmp")
+
+    fun expectedModelSizeBytes(): Long = ModelSpec.SIZE_BYTES
+
+    fun installedModelSizeBytes(): Long = getModelFile().length()
+
+    /**
+     * Whether the local LLM can run on this device. Low-RAM and unsupported-ABI devices
+     * gracefully fall back to heuristics.
+     */
+    val canUseLlm: StateFlow<Boolean> = combine(
+        _modelStatus,
+        _runtimeFailed,
+    ) { status, runtimeFailed ->
+        status is ModelStatus.Ready &&
+            !runtimeFailed &&
+            !isLowRamDevice() &&
+            isDeviceSupported()
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = false,
+    )
 
     fun startDownload(
-        modelUrl: String = DEFAULT_MODEL_URL,
-        expectedChecksum: String? = null,
+        modelUrl: String = ModelSpec.DOWNLOAD_URL,
+        expectedChecksum: String? = ModelSpec.SHA256,
         requireWifi: Boolean = true,
     ) {
+        _runtimeFailed.value = false
+        _partialDownload.value = hasPartialDownload()
         val networkType = if (requireWifi) NetworkType.UNMETERED else NetworkType.CONNECTED
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(networkType)
+            .setRequiresBatteryNotLow(true)
             .build()
 
         val inputData = Data.Builder()
             .putString(ModelDownloadWorker.KEY_MODEL_URL, modelUrl)
+            .putLong(ModelDownloadWorker.KEY_EXPECTED_SIZE, ModelSpec.SIZE_BYTES)
             .apply {
                 if (!expectedChecksum.isNullOrBlank()) {
                     putString(ModelDownloadWorker.KEY_EXPECTED_CHECKSUM, expectedChecksum)
@@ -111,33 +150,97 @@ class ModelManager @Inject constructor(
     }
 
     /** Resumes a paused (or interrupted) download; the worker picks up from the partial file. */
-    fun resumeDownload() {
-        startDownload()
+    fun resumeDownload(requireWifi: Boolean = true) {
+        startDownload(requireWifi = requireWifi)
     }
 
     fun cancelDownload() {
         workManager.cancelUniqueWork(ModelDownloadWorker.WORK_TAG)
+        workManager.pruneWork()
         getPartialModelFile().delete()
+        _partialDownload.value = false
+        _runtimeFailed.value = false
         checkInitialStatus()
     }
 
     fun deleteModel(): Boolean {
-        val file = getModelFile()
-        val deleted = if (file.exists()) file.delete() else true
-        localLlmClassifier.setModelInitialized(false)
+        workManager.cancelUniqueWork(ModelDownloadWorker.WORK_TAG)
+        workManager.pruneWork()
+        val deleted = getModelFile().let { if (it.exists()) it.delete() else true }
+        getPartialModelFile().delete()
+        localLlmClassifier.setModelPath(null)
+        _partialDownload.value = false
+        _runtimeFailed.value = false
         _modelStatus.value = ModelStatus.NotDownloaded
         return deleted
     }
 
+    fun retryRuntime() {
+        val file = getModelFile()
+        if (!file.exists()) return
+        if (!warmUpInProgress.compareAndSet(false, true)) return
+        scope.launch {
+            try {
+                val ready = localLlmClassifier.reload()
+                if (ready) {
+                    _runtimeFailed.value = false
+                    classificationScheduler.schedule()
+                } else {
+                    _runtimeFailed.value = true
+                }
+            } finally {
+                warmUpInProgress.set(false)
+            }
+        }
+    }
+
     private fun checkInitialStatus() {
+        deleteLegacyModelFiles()
+        _partialDownload.value = hasPartialDownload()
+
         val file = getModelFile()
         if (file.exists() && file.length() > 0) {
-            localLlmClassifier.setModelInitialized(true)
-            _modelStatus.value = ModelStatus.Ready(file.absolutePath)
+            markReady(file)
         } else {
-            localLlmClassifier.setModelInitialized(false)
+            localLlmClassifier.setModelPath(null)
             _modelStatus.value = ModelStatus.NotDownloaded
         }
+    }
+
+    private fun markReady(file: File) {
+        val usable = isDeviceSupported() && !isLowRamDevice()
+        localLlmClassifier.setModelPath(if (usable) file.absolutePath else null)
+        _partialDownload.value = false
+        _modelStatus.value = ModelStatus.Ready(file.absolutePath)
+        if (usable) {
+            warmUpAsync()
+        }
+    }
+
+    private fun warmUpAsync() {
+        if (!warmUpInProgress.compareAndSet(false, true)) return
+        scope.launch {
+            try {
+                val ready = localLlmClassifier.warmUp()
+                if (ready) {
+                    _runtimeFailed.value = false
+                    classificationScheduler.schedule()
+                } else {
+                    Log.w(TAG, "LiteRT-LM warm-up failed")
+                    _runtimeFailed.value = true
+                }
+            } finally {
+                warmUpInProgress.set(false)
+            }
+        }
+    }
+
+    private fun modelsDirectory(): File =
+        File(context.filesDir, MODELS_DIRECTORY).apply { if (!exists()) mkdirs() }
+
+    private fun deleteLegacyModelFiles() {
+        val directory = modelsDirectory()
+        ModelSpec.LEGACY_FILE_NAMES.forEach { name -> File(directory, name).delete() }
     }
 
     private fun observeWorkManager() {
@@ -151,21 +254,32 @@ class ModelManager @Inject constructor(
                     }
                     WorkInfo.State.RUNNING -> {
                         val progress = workInfo.progress.getInt(ModelDownloadWorker.KEY_PROGRESS, 0)
+                        _partialDownload.value = hasPartialDownload()
                         _modelStatus.value = ModelStatus.Downloading(progress)
                     }
                     WorkInfo.State.SUCCEEDED -> {
                         val file = getModelFile()
-                        if (file.exists()) {
-                            localLlmClassifier.setModelInitialized(true)
-                            _modelStatus.value = ModelStatus.Ready(file.absolutePath)
+                        if (file.exists() && file.length() > 0) {
+                            markReady(file)
                         } else {
-                            _modelStatus.value = ModelStatus.Error("Downloaded file not found")
+                            checkInitialStatus()
                         }
                     }
                     WorkInfo.State.FAILED -> {
-                        val error = workInfo.outputData.getString(ModelDownloadWorker.KEY_ERROR)
-                            ?: "Model download failed"
-                        _modelStatus.value = ModelStatus.Error(error)
+                        val file = getModelFile()
+                        if (file.exists() && file.length() > 0) {
+                            markReady(file)
+                        } else {
+                            _partialDownload.value = hasPartialDownload()
+                            val status = _modelStatus.value
+                            if (status is ModelStatus.Downloading || status is ModelStatus.WaitingForNetwork) {
+                                val error = workInfo.outputData.getString(ModelDownloadWorker.KEY_ERROR)
+                                    ?: "Model download failed"
+                                _modelStatus.value = ModelStatus.Error(error)
+                            } else {
+                                checkInitialStatus()
+                            }
+                        }
                     }
                     WorkInfo.State.CANCELLED -> {
                         checkInitialStatus()
@@ -190,14 +304,9 @@ class ModelManager @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "ModelManager"
+        private const val MODELS_DIRECTORY = "models"
         private const val LOW_RAM_THRESHOLD_BYTES = 3L * 1024 * 1024 * 1024 // 3 GB
         private const val BACKOFF_DELAY_SECONDS = 30L
-
-        /**
-         * Default model: Qwen3 0.6B from the LiteRT Community collection.
-         * Ungated (anonymous download allowed) and supports Range requests for resume.
-         */
-        const val DEFAULT_MODEL_URL =
-            "https://huggingface.co/litert-community/Qwen3-0.6B/resolve/main/Qwen3-0.6B.litertlm"
     }
 }

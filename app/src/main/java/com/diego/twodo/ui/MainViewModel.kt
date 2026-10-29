@@ -30,8 +30,4 @@ class MainViewModel @Inject constructor(
     fun completeWelcome() {
         viewModelScope.launch { onboardingPreferences.setWelcomeCompleted(true) }
     }
-
-    fun showModelSetup() {
-        viewModelScope.launch { onboardingPreferences.setOnboardingDismissed(false) }
-    }
 }

@@ -70,6 +70,7 @@ fun TaskRow(
     onDelete: (Long) -> Unit,
     modifier: Modifier = Modifier,
     labels: List<Label> = emptyList(),
+    onReevaluate: ((Task) -> Unit)? = null,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
     var completing by remember { mutableStateOf(false) }
@@ -156,6 +157,15 @@ fun TaskRow(
                                 onEdit(task)
                             },
                         )
+                        if (onReevaluate != null) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.task_reevaluate)) },
+                                onClick = {
+                                    menuExpanded = false
+                                    onReevaluate(task)
+                                },
+                            )
+                        }
                         DropdownMenuItem(
                             text = { Text(stringResource(R.string.task_delete)) },
                             onClick = {

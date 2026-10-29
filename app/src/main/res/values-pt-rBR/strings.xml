@@ -7,7 +7,7 @@
 
     <string name="setup_title">Configure a IA no dispositivo</string>
     <string name="setup_description">O Two.do organiza cada tarefa em 2 min, 30 min ou longas. Um modelo de IA rodando inteiramente no seu celular torna a organização mais inteligente. Nada sai do seu aparelho.</string>
-    <string name="setup_download_hint">Download único por Wi-Fi. Depois, tudo funciona offline.</string>
+    <string name="setup_download_hint">Download único por Wi-Fi (~330 MB). Depois, tudo funciona offline.</string>
     <string name="setup_download">Baixar modelo (Wi-Fi)</string>
     <string name="setup_skip">Pular por enquanto</string>
     <string name="setup_caption_downloading_wifi">Baixando por Wi-Fi. Mantenha esta tela aberta.</string>
@@ -34,7 +34,7 @@
     <string name="card_long_label">Longas</string>
     <string name="card_unclassified_label">Sem categoria</string>
 
-    <string name="banner_ai_off">A IA no dispositivo não está configurada — regras rápidas estão organizando suas tarefas.</string>
+    <string name="banner_ai_off">A IA no dispositivo não está disponível — regras rápidas estão organizando suas tarefas.</string>
     <string name="banner_set_up">Configurar</string>
 
     <string name="task_add_hint">Nome da tarefa</string>
@@ -43,6 +43,16 @@
     <string name="task_more_cd">Mais opções</string>
     <string name="task_edit">Editar</string>
     <string name="task_delete">Excluir</string>
+    <string name="task_reevaluate">Reavaliar categoria</string>
+    <string name="task_reevaluate_all">Reavaliar todas</string>
+    <string name="reevaluate_all_confirm_title">Reavaliar todas as tarefas?</string>
+    <string name="reevaluate_all_confirm_text">As categorias serão recalculadas para as tarefas ativas. Categorias definidas manualmente serão mantidas.</string>
+    <string name="reevaluate_all_confirm_action">Reavaliar</string>
+    <string name="reevaluate_task_moved_format">Agora em %1$s</string>
+    <string name="reevaluate_task_unchanged_format">Ainda em %1$s</string>
+    <string name="reevaluate_task_no_category">Não foi possível determinar uma categoria</string>
+    <string name="reevaluate_all_result_format">%1$d tarefas reavaliadas · %2$d atualizadas</string>
+    <string name="reevaluate_all_none">Nada para reavaliar</string>
     <string name="delete_confirm_title">Excluir tarefa?</string>
     <string name="delete_confirm_text">Esta ação não pode ser desfeita.</string>
     <string name="delete_confirm_action">Excluir</string>
@@ -99,4 +109,46 @@
 
     <string name="notification_channel_name">Lembretes de tarefas</string>
     <string name="notification_channel_description">Notificações que lembram você sobre tarefas</string>
+
+    <string name="model_download_channel_name">Download do modelo de IA</string>
+    <string name="model_download_channel_description">Progresso enquanto o Two.do baixa o modelo de IA no dispositivo</string>
+    <string name="model_download_notification_title">Baixando o modelo de IA no dispositivo</string>
+    <string name="model_download_notification_progress">Baixando… %1$d%%</string>
+    <string name="model_download_notification_preparing">Preparando download…</string>
+
+    <string name="model_manager_menu_title">Modelo de IA</string>
+    <string name="model_manager_title">Modelo de IA</string>
+    <string name="model_manager_back">Voltar</string>
+    <string name="model_manager_license_format">Licença: %1$s</string>
+    <string name="model_manager_download_size_format">Tamanho do download: %1$s</string>
+    <string name="model_manager_installed_size_format">Instalado: %1$s</string>
+    <string name="model_manager_status_not_downloaded">Não baixado</string>
+    <string name="model_manager_status_paused">Download pausado</string>
+    <string name="model_manager_status_waiting">Aguardando para iniciar</string>
+    <string name="model_manager_status_downloading">Baixando</string>
+    <string name="model_manager_status_ready">Modelo pronto</string>
+    <string name="model_manager_status_error">Falha no download</string>
+    <string name="model_manager_not_downloaded_description">Baixe o modelo uma vez para o Two.do refinar tarefas ambíguas inteiramente neste dispositivo.</string>
+    <string name="model_manager_waiting_description">O download começará quando o Wi-Fi e as condições do dispositivo permitirem.</string>
+    <string name="model_manager_progress_format">%1$d%% concluído</string>
+    <string name="model_manager_ready_description">O modelo no dispositivo está pronto. Tarefas ambíguas são refinadas em segundo plano.</string>
+    <string name="model_manager_error_format">Erro: %1$s</string>
+    <string name="model_manager_download_wifi">Baixar por Wi-Fi</string>
+    <string name="model_manager_download_mobile">Usar dados móveis</string>
+    <string name="model_manager_resume_wifi">Retomar por Wi-Fi</string>
+    <string name="model_manager_resume_mobile">Retomar por dados móveis</string>
+    <string name="model_manager_pause">Pausar download</string>
+    <string name="model_manager_cancel_download">Cancelar download</string>
+    <string name="model_manager_delete">Excluir modelo</string>
+    <string name="model_manager_retry_wifi">Tentar novamente por Wi-Fi</string>
+    <string name="model_manager_retry_runtime">Reiniciar mecanismo de IA</string>
+    <string name="model_manager_low_ram_warning">Este dispositivo tem pouca memória. O modelo pode não funcionar de forma confiável; as regras rápidas continuam disponíveis.</string>
+    <string name="model_manager_unsupported_warning">Este dispositivo não pode executar o modelo no dispositivo (requer arm64 ou x86_64 de 64 bits). As regras rápidas serão usadas.</string>
+    <string name="model_manager_runtime_failed">O modelo foi baixado, mas não pôde iniciar. As regras rápidas continuam funcionando.</string>
+    <string name="model_manager_delete_confirm_title">Excluir modelo de IA?</string>
+    <string name="model_manager_delete_confirm_text">O arquivo do modelo será removido. Você poderá baixá-lo novamente depois.</string>
+    <string name="model_manager_delete_confirm_action">Excluir</string>
+    <string name="model_manager_cancel_confirm_title">Cancelar download?</string>
+    <string name="model_manager_cancel_confirm_text">O download parcial será excluído.</string>
+    <string name="model_manager_cancel_confirm_action">Cancelar download</string>
 </resources>

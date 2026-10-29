@@ -20,8 +20,8 @@ android {
         applicationId = "com.diego.twodo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "0.5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -85,6 +85,10 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // LiteRT-LM
+    implementation(libs.litertlm.android)
+    implementation(libs.gson)
 
     // Glance
     implementation(libs.androidx.glance.appwidget)

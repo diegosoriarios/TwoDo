@@ -1,6 +1,7 @@
 package com.diego.twodo.ui.components
 
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +19,7 @@ import com.diego.twodo.ui.theme.TextPrimary
 @Composable
 fun AppHeader(
     modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -29,6 +31,8 @@ fun AppHeader(
             text = stringResource(R.string.app_name),
             style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp, fontWeight = FontWeight.Bold),
             color = TextPrimary,
+            modifier = Modifier.weight(1f),
         )
+        actions()
     }
 }

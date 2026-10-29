@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.diego.twodo.R
 import com.diego.twodo.ui.calendar.CalendarScreen
+import com.diego.twodo.ui.model.ModelManagerScreen
 import com.diego.twodo.ui.onboarding.ModelSetupScreen
 import com.diego.twodo.ui.onboarding.WelcomeScreen
 import com.diego.twodo.ui.tasks.TasksScreen
@@ -45,7 +46,8 @@ fun TwoDoApp(
     val welcomeCompleted by mainViewModel.isWelcomeCompleted.collectAsState()
     val showModelSetup by mainViewModel.showModelSetup.collectAsState()
     var currentTab by rememberSaveable { mutableStateOf(AppTab.TASKS) }
-    val showChrome = welcomeCompleted && !showModelSetup
+    var showModelManager by rememberSaveable { mutableStateOf(false) }
+    val showChrome = welcomeCompleted && !showModelSetup && !showModelManager
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
@@ -54,19 +56,23 @@ fun TwoDoApp(
                 .statusBarsPadding(),
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                AnimatedContent(
-                    targetState = Triple(welcomeCompleted, showModelSetup, currentTab),
-                    label = "two_do_screens",
-                ) { (completed, setup, tab) ->
-                    when {
-                        !completed -> WelcomeScreen(onStart = mainViewModel::completeWelcome)
-                        setup -> ModelSetupScreen()
-                        tab == AppTab.CALENDAR -> CalendarScreen()
-                        else -> TasksScreen(
-                            focusQuickAdd = focusQuickAdd,
-                            onQuickAddHandled = onQuickAddHandled,
-                            onOpenModelSetup = mainViewModel::showModelSetup,
-                        )
+                if (showModelManager) {
+                    ModelManagerScreen(onBack = { showModelManager = false })
+                } else {
+                    AnimatedContent(
+                        targetState = Triple(welcomeCompleted, showModelSetup, currentTab),
+                        label = "two_do_screens",
+                    ) { (completed, setup, tab) ->
+                        when {
+                            !completed -> WelcomeScreen(onStart = mainViewModel::completeWelcome)
+                            setup -> ModelSetupScreen()
+                            tab == AppTab.CALENDAR -> CalendarScreen()
+                            else -> TasksScreen(
+                                focusQuickAdd = focusQuickAdd,
+                                onQuickAddHandled = onQuickAddHandled,
+                                onOpenModelManager = { showModelManager = true },
+                            )
+                        }
                     }
                 }
             }

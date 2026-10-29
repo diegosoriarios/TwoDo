@@ -7,7 +7,7 @@
 
     <string name="setup_title">Set up on-device AI</string>
     <string name="setup_description">Two.do sorts every task into 2 min, 30 min or long. An AI model running entirely on your phone makes the sorting smarter. Nothing ever leaves your device.</string>
-    <string name="setup_download_hint">One-time Wi-Fi download. Everything runs offline afterwards.</string>
+    <string name="setup_download_hint">One-time Wi-Fi download (~330 MB). Everything runs offline afterwards.</string>
     <string name="setup_download">Download model (Wi-Fi)</string>
     <string name="setup_skip">Skip for now</string>
     <string name="setup_caption_downloading_wifi">Downloading over Wi-Fi. Keep this screen open.</string>
@@ -34,7 +34,7 @@
     <string name="card_long_label">Long</string>
     <string name="card_unclassified_label">Unclassified</string>
 
-    <string name="banner_ai_off">On-device AI isn\'t set up — quick rules are sorting your tasks.</string>
+    <string name="banner_ai_off">On-device AI isn\'t available — quick rules are sorting your tasks.</string>
     <string name="banner_set_up">Set up</string>
 
     <string name="task_add_hint">Add a task…</string>
@@ -43,6 +43,16 @@
     <string name="task_more_cd">More options</string>
     <string name="task_edit">Edit</string>
     <string name="task_delete">Delete</string>
+    <string name="task_reevaluate">Re-evaluate category</string>
+    <string name="task_reevaluate_all">Re-evaluate all</string>
+    <string name="reevaluate_all_confirm_title">Re-evaluate all tasks?</string>
+    <string name="reevaluate_all_confirm_text">Categories will be recalculated for active tasks. Manually set categories will be kept.</string>
+    <string name="reevaluate_all_confirm_action">Re-evaluate</string>
+    <string name="reevaluate_task_moved_format">Moved to %1$s</string>
+    <string name="reevaluate_task_unchanged_format">Still %1$s</string>
+    <string name="reevaluate_task_no_category">Couldn\'t determine a category</string>
+    <string name="reevaluate_all_result_format">Re-evaluated %1$d tasks · %2$d updated</string>
+    <string name="reevaluate_all_none">Nothing to re-evaluate</string>
     <string name="delete_confirm_title">Delete task?</string>
     <string name="delete_confirm_text">This action can\'t be undone.</string>
     <string name="delete_confirm_action">Delete</string>
@@ -99,4 +109,46 @@
 
     <string name="notification_channel_name">Task reminders</string>
     <string name="notification_channel_description">Notifications that remind you about tasks</string>
+
+    <string name="model_download_channel_name">AI model download</string>
+    <string name="model_download_channel_description">Progress while Two.do downloads the on-device AI model</string>
+    <string name="model_download_notification_title">Downloading on-device AI model</string>
+    <string name="model_download_notification_progress">Downloading… %1$d%%</string>
+    <string name="model_download_notification_preparing">Preparing download…</string>
+
+    <string name="model_manager_menu_title">AI model</string>
+    <string name="model_manager_title">AI model</string>
+    <string name="model_manager_back">Back</string>
+    <string name="model_manager_license_format">License: %1$s</string>
+    <string name="model_manager_download_size_format">Download size: %1$s</string>
+    <string name="model_manager_installed_size_format">Installed: %1$s</string>
+    <string name="model_manager_status_not_downloaded">Not downloaded</string>
+    <string name="model_manager_status_paused">Download paused</string>
+    <string name="model_manager_status_waiting">Waiting to start</string>
+    <string name="model_manager_status_downloading">Downloading</string>
+    <string name="model_manager_status_ready">Model ready</string>
+    <string name="model_manager_status_error">Download failed</string>
+    <string name="model_manager_not_downloaded_description">Download the model once to let Two.do refine ambiguous tasks entirely on this device.</string>
+    <string name="model_manager_waiting_description">The download will start when Wi-Fi and device conditions allow.</string>
+    <string name="model_manager_progress_format">%1$d%% complete</string>
+    <string name="model_manager_ready_description">The on-device model is ready. Ambiguous tasks are refined in the background.</string>
+    <string name="model_manager_error_format">Error: %1$s</string>
+    <string name="model_manager_download_wifi">Download over Wi-Fi</string>
+    <string name="model_manager_download_mobile">Use mobile data</string>
+    <string name="model_manager_resume_wifi">Resume over Wi-Fi</string>
+    <string name="model_manager_resume_mobile">Resume over mobile data</string>
+    <string name="model_manager_pause">Pause download</string>
+    <string name="model_manager_cancel_download">Cancel download</string>
+    <string name="model_manager_delete">Delete model</string>
+    <string name="model_manager_retry_wifi">Retry over Wi-Fi</string>
+    <string name="model_manager_retry_runtime">Retry AI engine</string>
+    <string name="model_manager_low_ram_warning">This device is low on memory. The model may not run reliably; quick rules remain available.</string>
+    <string name="model_manager_unsupported_warning">This device can\'t run the on-device model (64-bit arm64 or x86_64 required). Quick rules will be used.</string>
+    <string name="model_manager_runtime_failed">The model downloaded but couldn\'t start. Quick rules are still working.</string>
+    <string name="model_manager_delete_confirm_title">Delete AI model?</string>
+    <string name="model_manager_delete_confirm_text">The model file will be removed. You can download it again later.</string>
+    <string name="model_manager_delete_confirm_action">Delete</string>
+    <string name="model_manager_cancel_confirm_title">Cancel download?</string>
+    <string name="model_manager_cancel_confirm_text">The partial download will be deleted.</string>
+    <string name="model_manager_cancel_confirm_action">Cancel download</string>
 </resources>

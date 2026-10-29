@@ -5,6 +5,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.diego.twodo.data.worker.WidgetRefreshWorker
+import com.diego.twodo.notifications.ModelDownloadNotification
 import com.diego.twodo.notifications.NotificationHelper
 import dagger.hilt.android.HiltAndroidApp
 import java.util.concurrent.TimeUnit
@@ -15,6 +16,7 @@ class TwoDoApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         NotificationHelper.createChannel(this)
+        ModelDownloadNotification.createChannel(this)
         scheduleWidgetRefresh()
     }
 

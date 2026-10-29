@@ -12,18 +12,26 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -38,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -65,18 +74,24 @@ import java.time.LocalDate
 fun TasksScreen(
     focusQuickAdd: Boolean = false,
     onQuickAddHandled: () -> Unit = {},
-    onOpenModelSetup: () -> Unit,
+    onOpenModelManager: () -> Unit,
     viewModel: TasksViewModel = hiltViewModel(),
 ) {
     val tasks by viewModel.tasks.collectAsState()
     val modelStatus by viewModel.modelStatus.collectAsState()
+    val canUseLlm by viewModel.canUseLlm.collectAsState()
     val labels by viewModel.labels.collectAsState()
     val taskLabelMap by viewModel.taskLabelMap.collectAsState()
+    val isReevaluating by viewModel.isReevaluating.collectAsState()
 
     var showComposer by rememberSaveable { mutableStateOf(false) }
     var editingTaskId by rememberSaveable { mutableStateOf<Long?>(null) }
     var taskToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
     var filterLabelId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var headerMenuExpanded by remember { mutableStateOf(false) }
+    var showReevaluateAllDialog by rememberSaveable { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val resources = LocalResources.current
     val filteredTasks = remember(tasks, taskLabelMap, filterLabelId) {
         if (filterLabelId == null) {
             tasks
@@ -94,15 +109,92 @@ fun TasksScreen(
         }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.reevaluationFeedback.collect { feedback ->
+            val message = when (feedback) {
+                is ReevaluationFeedback.TaskResult -> {
+                    val bucket = feedback.newBucket
+                    when {
+                        bucket == null -> resources.getString(R.string.reevaluate_task_no_category)
+                        feedback.changed -> resources.getString(
+                            R.string.reevaluate_task_moved_format,
+                            resources.getString(bucket.labelRes()),
+                        )
+                        else -> resources.getString(
+                            R.string.reevaluate_task_unchanged_format,
+                            resources.getString(bucket.labelRes()),
+                        )
+                    }
+                }
+                is ReevaluationFeedback.AllResult -> {
+                    val summary = feedback.summary
+                    if (summary.evaluated == 0) {
+                        resources.getString(R.string.reevaluate_all_none)
+                    } else {
+                        resources.getString(
+                            R.string.reevaluate_all_result_format,
+                            summary.evaluated,
+                            summary.updated,
+                        )
+                    }
+                }
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .imePadding(),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            AppHeader()
-            if (modelStatus !is ModelStatus.Ready || !viewModel.canUseLlm) {
-                AiSetupBanner(onOpenModelSetup = onOpenModelSetup)
+            AppHeader(
+                actions = {
+                    Box {
+                        IconButton(
+                            onClick = { headerMenuExpanded = true },
+                            enabled = !isReevaluating,
+                        ) {
+                            if (isReevaluating) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Coral,
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = stringResource(R.string.task_more_cd),
+                                    tint = TextSecondary,
+                                )
+                            }
+                        }
+                        DropdownMenu(
+                            expanded = headerMenuExpanded,
+                            onDismissRequest = { headerMenuExpanded = false },
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.task_reevaluate_all)) },
+                                onClick = {
+                                    headerMenuExpanded = false
+                                    showReevaluateAllDialog = true
+                                },
+                                enabled = tasks.isNotEmpty(),
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.model_manager_menu_title)) },
+                                onClick = {
+                                    headerMenuExpanded = false
+                                    onOpenModelManager()
+                                },
+                            )
+                        }
+                    }
+                },
+            )
+            if (modelStatus !is ModelStatus.Ready || !canUseLlm) {
+                AiSetupBanner(onOpenModelManager = onOpenModelManager)
             }
             if (labels.isNotEmpty()) {
                 LabelFilterRow(
@@ -133,6 +225,7 @@ fun TasksScreen(
                             onEdit = { editingTaskId = it.id },
                             onDelete = { taskToDeleteId = it },
                             labels = taskLabelMap[task.id].orEmpty(),
+                            onReevaluate = { viewModel.reevaluateTask(it.id) },
                         )
                     }
                 }
@@ -152,6 +245,12 @@ fun TasksScreen(
                 contentDescription = stringResource(R.string.task_add_cd),
             )
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 24.dp, end = 24.dp, bottom = 88.dp),
+        )
     }
 
     if (showComposer) {
@@ -181,6 +280,27 @@ fun TasksScreen(
             initialReminderAt = task.reminderAt,
             initialLabelIds = taskLabelMap[task.id].orEmpty().map { it.id }.toSet(),
             initialIsCompleted = task.isCompleted,
+        )
+    }
+
+    if (showReevaluateAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showReevaluateAllDialog = false },
+            title = { Text(stringResource(R.string.reevaluate_all_confirm_title)) },
+            text = { Text(stringResource(R.string.reevaluate_all_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showReevaluateAllDialog = false
+                    viewModel.reevaluateAll()
+                }) {
+                    Text(stringResource(R.string.reevaluate_all_confirm_action))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReevaluateAllDialog = false }) {
+                    Text(stringResource(R.string.composer_cancel))
+                }
+            },
         )
     }
 
@@ -291,7 +411,7 @@ private fun SummaryGrid(tasks: List<Task>) {
 }
 
 @Composable
-private fun AiSetupBanner(onOpenModelSetup: () -> Unit) {
+private fun AiSetupBanner(onOpenModelManager: () -> Unit) {
     Surface(color = SurfaceDark, modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp),
@@ -303,7 +423,7 @@ private fun AiSetupBanner(onOpenModelSetup: () -> Unit) {
                 color = TextSecondary,
                 modifier = Modifier.weight(1f),
             )
-            TextButton(onClick = onOpenModelSetup) {
+            TextButton(onClick = onOpenModelManager) {
                 Text(
                     text = stringResource(R.string.banner_set_up),
                     color = Coral,
@@ -336,4 +456,11 @@ private fun EmptyState(modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
         )
     }
+}
+
+private fun TaskBucket.labelRes(): Int = when (this) {
+    TaskBucket.TWO_MIN -> R.string.bucket_two_min
+    TaskBucket.THIRTY_MIN -> R.string.bucket_thirty_min
+    TaskBucket.LONG -> R.string.bucket_long
+    TaskBucket.UNCLASSIFIED -> R.string.bucket_unclassified
 }

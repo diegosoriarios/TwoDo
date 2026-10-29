@@ -19,6 +19,7 @@ object NotificationHelper {
     const val CHANNEL_ID = "task_reminders"
 
     fun createChannel(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val channel = NotificationChannel(
             CHANNEL_ID,
             context.getString(R.string.notification_channel_name),

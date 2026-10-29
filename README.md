@@ -37,7 +37,8 @@ on-device AI model re-classifies anything the rules couldn't. Nothing ever leave
 - **Dual classification engine**
   - `HeuristicClassifier`: regex/keyword rules (verbs like *call, pay, reply*, word count, etc.) — zero latency, works offline out of the box.
   - Local LLM classifier for ambiguous tasks, refined in the background.
-- **Manual override** — pick a bucket yourself when capturing; user overrides are never re-classified.
+- **Manual override** — pick a bucket yourself when capturing; user overrides are never re-classified automatically.
+- **Re-evaluate categories** — re-run classification for a single task or all active tasks; single-item re-evaluation can replace a manual choice, while the bulk action keeps manual categories.
 - **Labels** — organize tasks with custom labels (many-to-many).
 - **Due dates & reminders** — schedule reminders per task; local notifications via WorkManager.
 - **Calendar view** — browse tasks by day, including completed work.
@@ -53,15 +54,16 @@ The setup screen offers a one-time model download backed by **WorkManager**:
 
 - Wi-Fi (unmetered) by default, optional mobile-data fallback.
 - **Resumable** downloads (HTTP `Range` requests) — pause/interruption keeps the partial file.
-- Optional **SHA-256 checksum** verification before the model is marked ready.
-- Exponential backoff and automatic retry on server errors.
-- **Low-RAM devices** gracefully fall back to the instant rules engine (`ActivityManager` memory check).
-- Skipped setup never blocks the app and can be resumed later from the task list banner.
+- **SHA-256 checksum** and expected-size verification before the model is marked ready.
+- Foreground-service downloads with progress notification, storage checks, backoff, and automatic retry.
+- A dedicated **AI model** screen in the task-list overflow menu supports download, pause, resume, retry, and delete.
+- **Low-RAM and 32-bit devices** gracefully fall back to the instant rules engine.
 
-The default model is [Qwen3 0.6B (LiteRT Community)](https://huggingface.co/litert-community/Qwen3-0.6B):
-ungated, supports Range requests for resume, and runs fully offline.
-The inference runner is a pluggable hook (`LocalLlmClassifier.executeInference`) where a native
-engine (MediaPipe LLM Inference / LiteRT) binds; until then the heuristic engine handles everything.
+The default model is [Qwen3 0.6B dynamic INT4 (LiteRT Community)](https://huggingface.co/litert-community/Qwen3-0.6B):
+about 329 MB, ungated, supports Range requests for resume, and runs fully offline.
+Inference uses the [LiteRT-LM](https://developers.google.com/edge/litert-lm/android) Android Kotlin API
+with the CPU backend and constrained JSON decoding. The model is stored in app-private storage and
+excluded from Android backups.
 
 ## Architecture
 
@@ -85,8 +87,10 @@ capture(title)
  ├─ user picked a bucket?  → save with BucketSource.USER (never re-classified)
  └─ else HeuristicClassifier.classify()          ← instant, on the capture path
       └─ result == UNCLASSIFIED?
-           └─ LlmClassifier.classifyTask()       ← background, only if model is ready
-                └─ update bucket with BucketSource.LLM
+           └─ ClassificationScheduler            ← capture returns immediately
+                └─ ClassificationWorker (WorkManager)
+                     └─ LlmClassifier.classifyTask()   ← only if model is ready
+                          └─ update bucket with BucketSource.LLM
 ```
 
 Conservative defaults apply when an LLM response is malformed (falls back to `30m`).
@@ -95,8 +99,12 @@ Conservative defaults apply when an LLM response is malformed (falls back to `30
 
 | Class | Role |
 |---|---|
-| `TasksViewModel` | Task list state, capture, filters, completion |
+| `TasksViewModel` | Task list state, capture, filters, completion, re-evaluation |
 | `OnboardingViewModel` | Setup sheet state machine (`SetupUiState`: idle / downloading / done / skipped / error) |
+| `ModelManager` | Model lifecycle, download orchestration, device support, engine warm-up |
+| `ModelManagerViewModel` | AI model screen state and download/delete actions |
+| `LiteRtLmInferenceEngine` | Native LiteRT-LM engine lifecycle and JSON-constrained inference |
+| `ClassificationWorker` | Background refinement of ambiguous tasks through WorkManager |
 | `ModelManager` | Model file storage, download orchestration, `StateFlow<ModelStatus>` |
 | `ModelDownloadWorker` | Resumable download with progress + checksum verification |
 | `TwoDoDatabase` | Room database (`TaskDao`, `LabelDao`) |
@@ -194,20 +202,20 @@ app/src/main/java/com/diego/twodo/
 ├── MainActivity.kt            # Single-activity entry, edge-to-edge + splash
 ├── TwoDoApplication.kt        # Hilt application
 ├── data/
-│   ├── classifier/            # HeuristicClassifier, LocalLlmClassifier
+│   ├── classifier/            # HeuristicClassifier, LocalLlmClassifier, LiteRtLmInferenceEngine
 │   ├── local/                 # Room database, DAOs, entities, converters
 │   ├── preferences/           # Onboarding state (welcome, dismissed, skipped)
 │   ├── repository/            # Task & classification repository implementations
-│   └── worker/                # ModelDownloadWorker
+│   └── worker/                # ModelDownloadWorker, ClassificationWorker, scheduler
 ├── di/                        # Hilt modules
 ├── domain/
-│   ├── classifier/            # LlmClassifier interface
+│   ├── classifier/            # LlmClassifier and LlmInferenceEngine interfaces
 │   ├── manager/               # ModelManager
-│   ├── model/                 # Task, TaskBucket, Label, ModelStatus, ...
-│   └── repository/            # Repository interfaces
-├── notifications/             # ReminderScheduler, ReminderWorker, NotificationHelper
+│   ├── model/                 # Task, TaskBucket, Label, ModelStatus, ModelSpec, ...
+│   └── repository/            # Repository and scheduler interfaces
+├── notifications/             # Reminder and model-download notifications
 ├── ui/
-│   ├── calendar/  composer/  onboarding/  quickadd/  tasks/
+│   ├── calendar/  composer/  model/  onboarding/  quickadd/  tasks/
 │   ├── components/            # Shared composables (buttons, chips, sheets, cards)
 │   ├── theme/                 # Color, Type, Tokens (design system)
 │   └── TwoDoApp.kt            # Top-level navigation & chrome
@@ -225,8 +233,8 @@ app/src/main/java/com/diego/twodo/
 
 ## Roadmap
 
-- [ ] Bind the native inference runner (MediaPipe LLM Inference / LiteRT) into `LocalLlmClassifier`
-- [ ] Background re-classification queue for existing tasks after the model becomes ready
+- [x] Bind the native inference runner (LiteRT-LM Kotlin API) into `LocalLlmClassifier`
+- [x] Background refinement queue for ambiguous tasks after the model becomes ready
 - [ ] Task breakdown suggestions for 🏗️ long bucket items
 - [ ] Cloud backup/restore rules (`data_extraction_rules.xml` TODOs)
 

@@ -1,5 +1,7 @@
 package com.diego.twodo.domain.repository
 
+import com.diego.twodo.domain.model.ReevaluationOutcome
+import com.diego.twodo.domain.model.ReevaluationSummary
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 
@@ -22,4 +24,16 @@ interface ClassificationRepository {
      * Respects user overrides (tasks with bucketSource == USER are skipped).
      */
     suspend fun processUnclassifiedQueue()
+
+    /**
+     * Re-runs classification for a single task, including tasks the user categorized manually.
+     * Returns null when no confident category could be determined.
+     */
+    suspend fun reevaluateTask(taskId: Long): ReevaluationOutcome?
+
+    /**
+     * Re-runs classification for all active tasks. Manually categorized tasks are preserved
+     * unless [includeManual] is true.
+     */
+    suspend fun reevaluateActiveTasks(includeManual: Boolean = false): ReevaluationSummary
 }
