@@ -38,6 +38,10 @@ class TaskRepositoryImpl @Inject constructor(
         return taskDao.getCompletedSinceSync(since).map { it.toDomain() }
     }
 
+    override fun getCompletedSince(since: Long): Flow<List<Task>> {
+        return taskDao.getCompletedSince(since).map { entities -> entities.map { it.toDomain() } }
+    }
+
     override fun getCompletedTasks(): Flow<List<Task>> {
         return taskDao.getCompletedTasks().map { entities -> entities.map { it.toDomain() } }
     }

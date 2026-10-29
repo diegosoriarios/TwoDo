@@ -6,6 +6,12 @@ import android.graphics.Canvas
 import android.graphics.PorterDuff
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -49,6 +55,7 @@ import com.diego.twodo.R
 import com.diego.twodo.domain.model.Task
 import com.diego.twodo.ui.quickadd.EditTaskActivity
 import com.diego.twodo.ui.quickadd.QuickAddActivity
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import java.time.Instant
 import java.time.ZoneId
@@ -114,17 +121,41 @@ class TasksWidget : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
-        val tasks = taskRepository.getActiveTasksSync()
-        val recentlyCompleted = taskRepository.getCompletedSinceSync(
-            System.currentTimeMillis() - COMPLETED_FEEDBACK_TTL_MS,
-        )
+        val completedSince = System.currentTimeMillis() - COMPLETED_FEEDBACK_TTL_MS
+        val activeTasksFlow = taskRepository.getActiveTasks()
+        val completedTasksFlow = taskRepository.getCompletedSince(completedSince)
+        val initialTasks = activeTasksFlow.first()
+        val initialCompleted = taskRepository.getCompletedSinceSync(completedSince)
         Log.d(
             WIDGET_LOG_TAG,
-            "compose: active=${tasks.size} recentCompleted=${recentlyCompleted.size}",
+            "compose: active=${initialTasks.size} completed=${initialCompleted.size}",
         )
         val appWidgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
         val icons = context.widgetIcons()
         provideContent {
+            val tasks by activeTasksFlow.collectAsState(initialTasks)
+            val allCompleted by completedTasksFlow.collectAsState(initialCompleted)
+            var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+
+            LaunchedEffect(allCompleted) {
+                while (true) {
+                    val nextExpiry = allCompleted
+                        .mapNotNull { it.completedAt }
+                        .filter { it + COMPLETED_FEEDBACK_TTL_MS > now }
+                        .minOrNull()
+                        ?: break
+                    delay(
+                        (nextExpiry + COMPLETED_FEEDBACK_TTL_MS - System.currentTimeMillis())
+                            .coerceAtLeast(1L),
+                    )
+                    now = System.currentTimeMillis()
+                }
+            }
+
+            val recentlyCompleted = allCompleted.filter { task ->
+                task.completedAt != null &&
+                    task.completedAt > now - COMPLETED_FEEDBACK_TTL_MS
+            }
             val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
             val sorted = filter.apply(tasks)
             val strings = WidgetStrings(
@@ -170,12 +201,12 @@ class TasksWidget : GlanceAppWidget() {
                     EmptyState(strings.emptyTitle)
                 } else {
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                        items(tasks) { task ->
+                        items(tasks, itemId = { it.id }) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
                                 TaskRow(task, icons, isCompleted = false, checkCd = strings.checkCd)
                             }
                         }
-                        items(recentlyCompleted) { task ->
+                        items(recentlyCompleted, itemId = { it.id }) { task ->
                             Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
                                 TaskRow(task, icons, isCompleted = true, checkCd = strings.checkCd)
                             }

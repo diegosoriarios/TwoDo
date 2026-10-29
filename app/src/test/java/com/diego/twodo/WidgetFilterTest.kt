@@ -41,7 +41,7 @@ class WidgetFilterTest {
     @Test
     fun `today includes due today, undated and overdue, excludes future`() {
         val result = WidgetFilter.TODAY.apply(tasks, zone).map { it.id }
-        assertEquals(listOf(3L, 1L, 2L, 6L), result)
+        assertEquals(listOf(3L, 6L, 2L, 1L), result)
     }
 
     @Test
@@ -69,9 +69,9 @@ class WidgetFilterTest {
     }
 
     @Test
-    fun `all includes everything sorted by bucket then createdAt`() {
+    fun `all includes everything sorted by bucket then newest first`() {
         val result = WidgetFilter.ALL.apply(tasks, zone).map { it.id }
-        assertEquals(listOf(1L, 4L, 2L, 5L, 3L, 6L), result)
+        assertEquals(listOf(4L, 1L, 5L, 2L, 3L, 6L), result)
     }
 
     @Test
@@ -81,10 +81,10 @@ class WidgetFilterTest {
     }
 
     @Test
-    fun `today sorts undated tasks as today by createdAt`() {
+    fun `today sorts undated tasks as today newest first`() {
         val result = WidgetFilter.TODAY.apply(tasks, zone)
             .filter { it.dueDate == null || it.dueDate >= todayStart }
             .map { it.id }
-        assertEquals(listOf(1L, 2L, 6L), result)
+        assertEquals(listOf(6L, 2L, 1L), result)
     }
 }

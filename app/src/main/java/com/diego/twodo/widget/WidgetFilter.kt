@@ -31,8 +31,10 @@ enum class WidgetFilter {
         }
         return filtered.sortedWith(
             when (this) {
-                ALL -> compareBy({ bucketOrder(it.bucket) }, { it.createdAt })
-                else -> compareBy({ it.dueDate ?: todayStart }, { it.createdAt })
+                ALL -> compareBy<Task>({ bucketOrder(it.bucket) })
+                    .thenByDescending { it.createdAt }
+                else -> compareBy<Task>({ it.dueDate ?: todayStart })
+                    .thenByDescending { it.createdAt }
             },
         )
     }
