@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -31,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.diego.twodo.ui.theme.CalendarDotDone
+import com.diego.twodo.ui.theme.CalendarDotPending
 import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
 import com.diego.twodo.ui.theme.TextPrimary
@@ -48,6 +51,7 @@ fun CalendarCard(
     selectedDate: LocalDate,
     onDateSelected: (LocalDate) -> Unit,
     modifier: Modifier = Modifier,
+    dayStatuses: Map<LocalDate, CalendarDayStatus> = emptyMap(),
 ) {
     var visibleMonthEpochDay by rememberSaveable {
         mutableLongStateOf(selectedDate.withDayOfMonth(1).toEpochDay())
@@ -120,19 +124,40 @@ fun CalendarCard(
                     ) {
                         if (day != null) {
                             val isSelected = day == selectedDate
-                            Box(
-                                modifier = Modifier
-                                    .size(28.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isSelected) Coral else Color.Transparent)
-                                    .clickable { onDateSelected(day) },
-                                contentAlignment = Alignment.Center,
+                            val status = dayStatuses[day]
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.clickable { onDateSelected(day) },
                             ) {
-                                Text(
-                                    text = day.dayOfMonth.toString(),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = if (isSelected) TextPrimary else MaterialTheme.colorScheme.onSurface,
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(28.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) Coral else Color.Transparent),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = day.dayOfMonth.toString(),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = if (isSelected) TextPrimary else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                if (status != null) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(4.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                when (status) {
+                                                    CalendarDayStatus.PENDING -> CalendarDotPending
+                                                    CalendarDayStatus.COMPLETED -> CalendarDotDone
+                                                },
+                                            ),
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.size(4.dp))
+                                }
                             }
                         }
                     }

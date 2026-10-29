@@ -33,6 +33,7 @@ import com.diego.twodo.domain.model.Task
 import com.diego.twodo.ui.components.AppHeader
 import com.diego.twodo.ui.components.CalendarCard
 import com.diego.twodo.ui.components.SectionHeader
+import com.diego.twodo.ui.components.calendarDayStatuses
 import com.diego.twodo.ui.components.TaskRow
 import com.diego.twodo.ui.components.sectionDateFormatter
 import com.diego.twodo.ui.components.sortedForDisplay
@@ -58,6 +59,9 @@ fun CalendarScreen(
     val completedForDay = remember(completedTasks, selectedEpochDay) {
         completedTasks.filterCompletedOn(selectedDate)
     }
+    val dayStatuses = remember(tasks, completedTasks) {
+        calendarDayStatuses(tasks + completedTasks)
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         AppHeader()
@@ -70,6 +74,7 @@ fun CalendarScreen(
                 CalendarCard(
                     selectedDate = selectedDate,
                     onDateSelected = { selectedEpochDay = it.toEpochDay() },
+                    dayStatuses = dayStatuses,
                 )
             }
             item(key = "section") {
