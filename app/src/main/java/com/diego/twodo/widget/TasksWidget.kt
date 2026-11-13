@@ -120,6 +120,16 @@ class TasksWidget : GlanceAppWidget() {
 
     override val stateDefinition = PreferencesGlanceStateDefinition
 
+    // TEMPORARY DIAGNOSTICS — remove together with WidgetErrorDiagnostics.kt.
+    override fun onCompositionError(
+        context: Context,
+        id: GlanceId,
+        appWidgetId: Int,
+        throwable: Throwable,
+    ) {
+        WidgetErrorDiagnostics.report(context, appWidgetId, throwable)
+    }
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val taskRepository = widgetTaskRepository(context)
         val completedSince = System.currentTimeMillis() - COMPLETED_FEEDBACK_TTL_MS

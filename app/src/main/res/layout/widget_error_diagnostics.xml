@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TEMPORARY DIAGNOSTICS — remove together with WidgetErrorDiagnostics.kt. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#121212"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/widget_diag_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TwoDo widget error"
+        android:textColor="#D35D47"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:maxLines="1" />
+
+    <TextView
+        android:id="@+id/widget_diag_exception"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="#FFFFFF"
+        android:textSize="10sp"
+        android:maxLines="10"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_diag_frames"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="#A0A0A0"
+        android:textSize="9sp"
+        android:maxLines="14"
+        android:ellipsize="end" />
+
+</LinearLayout>
