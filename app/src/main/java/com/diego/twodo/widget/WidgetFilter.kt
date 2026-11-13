@@ -47,7 +47,28 @@ enum class WidgetFilter {
         FUTURE -> R.string.widget_filter_future
         ALL -> R.string.widget_filter_all
     }
+
+    fun applySectioned(tasks: List<Task>, zone: ZoneId = ZoneId.systemDefault()): List<WidgetSection> =
+        when (this) {
+            TODAY -> {
+                val sorted = apply(tasks, zone)
+                val todayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+                val isPrevious: (Task) -> Boolean = { it.dueDate != null && it.dueDate < todayStart }
+                val today = sorted.filterNot(isPrevious)
+                val previous = sorted.filter(isPrevious)
+                buildList {
+                    if (today.isNotEmpty()) add(WidgetSection(R.string.widget_today, today))
+                    if (previous.isNotEmpty()) add(WidgetSection(R.string.widget_filter_previous, previous))
+                }
+            }
+            else -> listOf(WidgetSection(null, apply(tasks, zone)))
+        }
 }
+
+data class WidgetSection(
+    val titleRes: Int?,
+    val tasks: List<Task>,
+)
 
 private fun bucketOrder(bucket: TaskBucket): Int = when (bucket) {
     TaskBucket.TWO_MIN -> 0

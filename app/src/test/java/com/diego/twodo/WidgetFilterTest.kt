@@ -4,6 +4,7 @@ import com.diego.twodo.domain.model.Task
 import com.diego.twodo.domain.model.TaskBucket
 import com.diego.twodo.widget.WidgetFilter
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.time.LocalDate
 import java.time.ZoneId
@@ -86,5 +87,36 @@ class WidgetFilterTest {
             .filter { it.dueDate == null || it.dueDate >= todayStart }
             .map { it.id }
         assertEquals(listOf(6L, 2L, 1L), result)
+    }
+
+    @Test
+    fun `today filter is sectioned into today first then previous`() {
+        val sections = WidgetFilter.TODAY.applySectioned(tasks, zone)
+        assertEquals(2, sections.size)
+        assertEquals(com.diego.twodo.R.string.widget_today, sections[0].titleRes)
+        assertEquals(listOf(6L, 2L, 1L), sections[0].tasks.map { it.id })
+        assertEquals(com.diego.twodo.R.string.widget_filter_previous, sections[1].titleRes)
+        assertEquals(listOf(3L), sections[1].tasks.map { it.id })
+    }
+
+    @Test
+    fun `today filter without overdue has only today section`() {
+        val sections = WidgetFilter.TODAY.applySectioned(
+            listOf(task(1, dueDate = todayStart), task(2, dueDate = null)),
+            zone,
+        )
+        assertEquals(1, sections.size)
+        assertEquals(com.diego.twodo.R.string.widget_today, sections[0].titleRes)
+        assertEquals(listOf(2L, 1L), sections[0].tasks.map { it.id })
+    }
+
+    @Test
+    fun `non today filters return a single untitled section`() {
+        WidgetFilter.entries.filter { it != WidgetFilter.TODAY }.forEach { filter ->
+            val sections = filter.applySectioned(tasks, zone)
+            assertEquals(1, sections.size)
+            assertNull(sections[0].titleRes)
+            assertEquals(filter.apply(tasks, zone).map { it.id }, sections[0].tasks.map { it.id })
+        }
     }
 }

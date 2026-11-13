@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -157,7 +158,7 @@ class TasksWidget : GlanceAppWidget() {
                     task.completedAt > now - COMPLETED_FEEDBACK_TTL_MS
             }
             val filter = (LocalState.current as? Preferences).widgetFilterOrDefault()
-            val sorted = filter.apply(tasks)
+            val sections = filter.applySectioned(tasks)
             val strings = WidgetStrings(
                 appName = context.getString(R.string.app_name),
                 filterLabel = context.getString(filter.labelRes()),
@@ -171,19 +172,20 @@ class TasksWidget : GlanceAppWidget() {
                 checkCd = context.getString(R.string.widget_check_cd),
                 openAppCd = context.getString(R.string.widget_open_app_cd),
             )
-            TasksWidgetContent(sorted, recentlyCompleted, strings, appWidgetId, filter, icons)
+            TasksWidgetContent(sections, recentlyCompleted, strings, appWidgetId, filter, icons)
         }
     }
 
     @Composable
     private fun TasksWidgetContent(
-        tasks: List<Task>,
+        sections: List<WidgetSection>,
         recentlyCompleted: List<Task>,
         strings: WidgetStrings,
         appWidgetId: Int,
         filter: WidgetFilter,
         icons: WidgetIcons,
     ) {
+        val context = LocalContext.current
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
@@ -197,13 +199,29 @@ class TasksWidget : GlanceAppWidget() {
                     .defaultWeight()
                     .padding(12.dp),
             ) {
-                if (tasks.isEmpty() && recentlyCompleted.isEmpty()) {
+                if (sections.all { it.tasks.isEmpty() } && recentlyCompleted.isEmpty()) {
                     EmptyState(strings.emptyTitle)
                 } else {
                     LazyColumn(modifier = GlanceModifier.fillMaxSize()) {
-                        items(tasks, itemId = { it.id }) { task ->
-                            Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
-                                TaskRow(task, icons, isCompleted = false, checkCd = strings.checkCd)
+                        sections.forEach { section ->
+                            section.titleRes?.let { titleRes ->
+                                item(itemId = -titleRes.toLong()) {
+                                    Text(
+                                        text = context.getString(titleRes),
+                                        style = TextStyle(
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = WidgetTextSecondary,
+                                        ),
+                                        maxLines = 1,
+                                        modifier = GlanceModifier.padding(bottom = 6.dp),
+                                    )
+                                }
+                            }
+                            items(section.tasks, itemId = { it.id }) { task ->
+                                Box(modifier = GlanceModifier.padding(bottom = 6.dp)) {
+                                    TaskRow(task, icons, isCompleted = false, checkCd = strings.checkCd)
+                                }
                             }
                         }
                         items(recentlyCompleted, itemId = { it.id }) { task ->
