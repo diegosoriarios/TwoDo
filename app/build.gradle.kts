@@ -20,8 +20,8 @@ android {
         applicationId = "com.diego.twodo"
         minSdk = 24
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.5.1"
+        versionCode = 4
+        versionName = "0.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

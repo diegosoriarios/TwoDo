@@ -72,9 +72,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -82,6 +84,7 @@ import androidx.core.content.ContextCompat
 import com.diego.twodo.R
 import com.diego.twodo.domain.model.Label
 import com.diego.twodo.domain.model.TaskBucket
+import com.diego.twodo.domain.parser.NaturalDateParser
 import com.diego.twodo.ui.theme.Charcoal
 import com.diego.twodo.ui.theme.Coral
 import com.diego.twodo.ui.theme.SurfaceDark
@@ -124,7 +127,9 @@ fun TaskComposerSheet(
     initialLabelIds: Set<Long> = emptySet(),
     initialIsCompleted: Boolean = false,
 ) {
-    var text by rememberSaveable { mutableStateOf(initialTitle) }
+    var text by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(initialTitle))
+    }
     var bucketChoice by rememberSaveable { mutableStateOf(initialBucket.toBucketChoice()) }
     var dueEpochDay by rememberSaveable {
         mutableLongStateOf(
@@ -144,9 +149,20 @@ fun TaskComposerSheet(
 
     val isEditing = autoSave != null
     val latestAutoSave by rememberUpdatedState(autoSave)
+    val applyNaturalDate: (TextFieldValue) -> TextFieldValue = { value ->
+        val match = NaturalDateParser.parse(value.text)
+        if (match == null) {
+            value
+        } else {
+            dueEpochDay = match.epochDay
+            val reachesEnd = match.range.last >= value.text.length - 1
+            val stripped = value.text.removeRange(match.range).let { if (reachesEnd) it.trimEnd() else it }
+            TextFieldValue(stripped, TextRange(match.range.first.coerceAtMost(stripped.length)))
+        }
+    }
     val persist: () -> Unit = {
         val save = latestAutoSave
-        val trimmed = text.trim()
+        val trimmed = text.text.trim()
         if (save != null && trimmed.isNotBlank()) {
             save(
                 trimmed,
@@ -183,10 +199,10 @@ fun TaskComposerSheet(
             keyboard?.hide()
             persist()
             onDismiss()
-        } else if (text.isNotBlank()) {
+        } else if (text.text.isNotBlank()) {
             keyboard?.hide()
             onSubmit(
-                text.trim(),
+                text.text.trim(),
                 bucketChoice.toBucket(),
                 TaskComposerDefaults.epochDayToMillis(dueEpochDay),
                 reminderAt.takeIf { it != -1L },
@@ -253,7 +269,7 @@ fun TaskComposerSheet(
                 }
                 BasicTextField(
                     value = text,
-                    onValueChange = { text = it },
+                    onValueChange = { text = applyNaturalDate(it) },
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 48.dp)
@@ -270,7 +286,7 @@ fun TaskComposerSheet(
                     keyboardActions = KeyboardActions(onDone = { submit() }),
                     decorationBox = { innerTextField ->
                         Box(contentAlignment = Alignment.CenterStart) {
-                            if (text.isEmpty()) {
+                            if (text.text.isEmpty()) {
                                 Text(
                                     text = stringResource(R.string.task_add_hint),
                                     style = TextStyle(
@@ -353,7 +369,7 @@ fun TaskComposerSheet(
                         .size(40.dp)
                         .clip(RoundedCornerShape(8.dp))
                         .background(Coral)
-                        .clickable(enabled = isEditing || text.isNotBlank()) { submit() },
+                        .clickable(enabled = isEditing || text.text.isNotBlank()) { submit() },
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -480,7 +496,7 @@ fun TaskComposerSheet(
 
     LaunchedEffect(isEditing) {
         if (!isEditing) return@LaunchedEffect
-        snapshotFlow { text }
+        snapshotFlow { text.text }
             .drop(1)
             .debounce(500)
             .collect { if (it.isNotBlank()) persist() }
