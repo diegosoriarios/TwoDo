@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
@@ -182,12 +181,13 @@ class TasksWidget : GlanceAppWidget() {
                 checkCd = context.getString(R.string.widget_check_cd),
                 openAppCd = context.getString(R.string.widget_open_app_cd),
             )
-            TasksWidgetContent(sections, recentlyCompleted, strings, appWidgetId, filter, icons)
+            TasksWidgetContent(context, sections, recentlyCompleted, strings, appWidgetId, filter, icons)
         }
     }
 
     @Composable
     private fun TasksWidgetContent(
+        context: Context,
         sections: List<WidgetSection>,
         recentlyCompleted: List<Task>,
         strings: WidgetStrings,
@@ -195,7 +195,6 @@ class TasksWidget : GlanceAppWidget() {
         filter: WidgetFilter,
         icons: WidgetIcons,
     ) {
-        val context = LocalContext.current
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
